@@ -3,17 +3,19 @@
 (()=>{
 const R={
   ms:{title:"Status penerbangan",load:"Memuatkan status...",none:"Status tidak tersedia untuk penerbangan ini.",err:"Status tidak tersedia buat masa ini.",
+      nokey:"Status belum diaktifkan pada laman ini.",busy:"Terlalu banyak permintaan. Cuba lagi sebentar.",cap:"Had pertanyaan harian dicapai. Cuba lagi esok.",
       dep:"Berlepas",arr:"Tiba",act:"sebenar",est:"anggaran",ontime:"Tepat masa",late:"Lewat",min:"min",h:"j",
       landed:"Mendarat",plan:"Berjadual",enroute:"Dalam penerbangan",cancel:"Dibatalkan",eta:"Anggaran tiba dalam",src:"Sumber: AirLabs"},
   en:{title:"Flight status",load:"Loading status...",none:"No status is available for this flight.",err:"Status is unavailable right now.",
+      nokey:"Flight status is not enabled on this site yet.",busy:"Too many requests. Please try again shortly.",cap:"Daily lookup limit reached. Please try again tomorrow.",
       dep:"Departed",arr:"Arrives",act:"actual",est:"estimated",ontime:"On time",late:"Delayed",min:"min",h:"h",
       landed:"Landed",plan:"Scheduled",enroute:"En route",cancel:"Cancelled",eta:"Arrives in",src:"Source: AirLabs"}
 };
 const r=k=>R[lang][k];
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const cache=new Map();      // callsign -> { v: status | null | "err", t }
+const cache=new Map();      // callsign -> { v: status object | null | "err" | "nokey" | "busy" | "cap", t }
 const pending=new Set();
-const fresh=c=>c&&Date.now()-c.t<(c.v==="err"?60000:300000);
+const fresh=c=>c&&Date.now()-c.t<(typeof c.v==="string"?60000:300000);   // error states retry after 1 min
 const hm=t=>t?String(t).slice(11,16):"--:--";   // "2026-10-22 09:10" -> "09:10" (local time at that airport)
 
 const st=document.createElement("style");
@@ -58,7 +60,7 @@ function eta(m){
 function view(cs){
   const c=cache.get(cs);
   if(!fresh(c))return `<p>${r("load")}</p>`;
-  if(c.v==="err")return `<p>${r("err")}</p>`;
+  if(typeof c.v==="string")return `<p>${r(c.v)}</p>`;   // "err" | "nokey" | "busy" | "cap"
   if(c.v===null)return `<p>${r("none")}</p>`;
   const s=c.v;
   const bar=s.status=="en-route"&&s.progress!=null
@@ -75,6 +77,10 @@ async function fetchStatus(cs){
   try{
     const res=await fetch(`/api/status/${encodeURIComponent(cs)}`);
     if(res.ok)v=(await res.json()).status||null;
+    else{
+      const j=await res.json().catch(()=>({}));
+      v=j.error==="not_configured"?"nokey":j.error==="too_many_requests"?"busy":j.error==="daily_cap"?"cap":"err";
+    }
   }catch(e){}
   pending.delete(cs);
   cache.set(cs,{v,t:Date.now()});
