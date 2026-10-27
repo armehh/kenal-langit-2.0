@@ -38,39 +38,92 @@ async function getToken() {
 console.log('OpenSky credentials:', process.env.OPENSKY_CLIENT_ID && process.env.OPENSKY_CLIENT_SECRET ? 'set' : 'NOT set (anonymous, likely rate-limited on cloud IPs)');
 console.log('AirLabs key:', process.env.AIRLABS_API_KEY ? 'set' : 'NOT set');
 
+// ---- Primary source: adsb.lol (free, no key, works from cloud IPs). Radius max is 250 nm, so use 3 circles ----
+const ADSB_POINTS = [[4.5, 102.0, 250], [2.5, 111.0, 250], [5.5, 117.0, 250]]; // Peninsular, Sarawak, Sabah
+const inBox = (lat, lng) => lat >= 0.8 && lat <= 7.4 && lng >= 99.5 && lng <= 119.5;
+
+// Approximate country from ICAO 24-bit address block (adsb.lol does not return country)
+const HEX_COUNTRY = [
+  [0x750000, 0x757FFF, 'Malaysia'], [0x758000, 0x75FFFF, 'Philippines'], [0x768000, 0x76FFFF, 'Singapore'],
+  [0x780000, 0x7BFFFF, 'China'], [0x7C0000, 0x7FFFFF, 'Australia'], [0x800000, 0x83FFFF, 'India'],
+  [0x840000, 0x87FFFF, 'Japan'], [0x880000, 0x887FFF, 'Thailand'], [0x888000, 0x88FFFF, 'Vietnam'],
+  [0x895000, 0x895FFF, 'Brunei'], [0x896000, 0x896FFF, 'United Arab Emirates'], [0x8A0000, 0x8A7FFF, 'Indonesia'],
+  [0x400000, 0x43FFFF, 'United Kingdom'], [0xA00000, 0xAFFFFF, 'United States'],
+];
+const hexCountry = hex => { const n = parseInt(hex, 16); const m = HEX_COUNTRY.find(([a, b]) => n >= a && n <= b); return m ? m[2] : 'Unknown'; };
+
+async function fetchAdsbLol() {
+  const results = await Promise.all(ADSB_POINTS.map(async ([lat, lon, nm]) => {
+    const r = await fetch(`https://api.adsb.lol/v2/lat/${lat}/lon/${lon}/dist/${nm}`, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) throw new Error('adsb.lol ' + r.status);
+    return (await r.json()).ac || [];
+  }));
+  const seen = new Set();
+  const flights = [];
+  for (const a of results.flat()) {
+    if (!a.hex || seen.has(a.hex) || a.lat == null || a.lon == null) continue;
+    seen.add(a.hex);
+    if (a.alt_baro === 'ground' || !inBox(a.lat, a.lon)) continue;      // airborne, inside Malaysian airspace
+    const ft = typeof a.alt_baro === 'number' ? a.alt_baro : (typeof a.alt_geom === 'number' ? a.alt_geom : null);
+    // Same units as OpenSky output (alt m, vel m/s, vr m/s) so the frontend needs no change
+    flights.push({
+      icao: a.hex,
+      cs: (a.flight || '').trim(),
+      country: hexCountry(a.hex),
+      lat: a.lat,
+      lng: a.lon,
+      alt: ft == null ? null : ft * 0.3048,
+      vel: typeof a.gs === 'number' ? a.gs * 0.514444 : null,
+      hdg: a.track || 0,
+      vr: typeof a.baro_rate === 'number' ? a.baro_rate * 0.00508 : null,
+    });
+  }
+  return flights;
+}
+
+// ---- Fallback source: OpenSky ----
+async function fetchOpenSky() {
+  const headers = {};
+  try {
+    const tk = await getToken();
+    if (tk) headers.Authorization = `Bearer ${tk}`;
+  } catch (e) {
+    console.warn('OpenSky token error:', e.message, e.cause?.code || ''); // falls back to anonymous
+  }
+  const r = await fetch(`https://opensky-network.org/api/states/all?${BBOX}`, { headers, signal: AbortSignal.timeout(8000) });
+  if (!r.ok) throw new Error('opensky ' + r.status + (headers.Authorization ? ' (with token)' : ' (anonymous)'));
+  const d = await r.json();
+  return (d.states || [])
+    .filter(s => s[5] != null && s[6] != null && !s[8]) // has position, airborne
+    .map(s => ({
+      icao: s[0],
+      cs: (s[1] || '').trim(),
+      country: s[2],
+      lat: s[6],
+      lng: s[5],
+      alt: s[13] ?? s[7],
+      vel: s[9],
+      hdg: s[10] || 0,
+      vr: s[11],
+    }));
+}
+
 app.get('/api/flights', async (req, res) => {
   if (Date.now() - cache.t < 15000) return res.json({ source: 'cache', flights: cache.data });
-  try {
-    const headers = {};
+  const errors = [];
+  for (const [name, fn] of [['adsb.lol', fetchAdsbLol], ['opensky', fetchOpenSky]]) {
     try {
-      const tk = await getToken();
-      if (tk) headers.Authorization = `Bearer ${tk}`;
+      const flights = await fn();
+      if (!flights.length) throw new Error('no flights returned');
+      cache = { t: Date.now(), data: flights };
+      return res.json({ source: name, flights });
     } catch (e) {
-      console.warn('OpenSky token error:', e.message, e.cause?.code || ''); // falls back to anonymous
+      console.warn(`Flights error (${name}):`, e.message, e.cause?.code || '');
+      errors.push(`${name}: ${e.message}`);
     }
-    const r = await fetch(`https://opensky-network.org/api/states/all?${BBOX}`, { headers, signal: AbortSignal.timeout(8000) });
-    if (!r.ok) throw new Error('opensky ' + r.status + (headers.Authorization ? ' (with token)' : ' (anonymous)'));
-    const d = await r.json();
-    const flights = (d.states || [])
-      .filter(s => s[5] != null && s[6] != null && !s[8]) // has position, airborne
-      .map(s => ({
-        icao: s[0],
-        cs: (s[1] || '').trim(),
-        country: s[2],
-        lat: s[6],
-        lng: s[5],
-        alt: s[13] ?? s[7],
-        vel: s[9],
-        hdg: s[10] || 0,
-        vr: s[11],
-      }));
-    cache = { t: Date.now(), data: flights };
-    res.json({ source: 'opensky', flights });
-  } catch (e) {
-    console.warn('Flights error:', e.message, e.cause?.code || '');
-    // frontend shows sample data if flights is empty; `error` tells you why
-    res.json({ source: 'stale', error: e.message, flights: cache.data });
   }
+  // frontend shows sample data if flights is empty; `error` tells you why
+  res.json({ source: 'stale', error: errors.join(' | '), flights: cache.data });
 });
 
 // ---------- Route lookup: callsign -> origin/destination via adsbdb (free, no key) ----------
