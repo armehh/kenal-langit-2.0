@@ -251,6 +251,7 @@ app.get('/api/status/:callsign', async (req, res) => {
     res.json({ status: data });
   } catch (e) {
     console.warn('Status error:', e.message);
+    if (e.message === 'daily cap reached') return res.status(503).json({ error: 'daily_cap' });    
     res.status(502).json({ error: 'status_unavailable' });
   }
 });
