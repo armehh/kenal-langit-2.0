@@ -52,15 +52,28 @@ const HEX_COUNTRY = [
 ];
 const hexCountry = hex => { const n = parseInt(hex, 16); const m = HEX_COUNTRY.find(([a, b]) => n >= a && n <= b); return m ? m[2] : 'Unknown'; };
 
-async function fetchAdsbLol() {
-  const results = await Promise.all(ADSB_POINTS.map(async ([lat, lon, nm]) => {
-    const r = await fetch(`https://api.adsb.lol/v2/lat/${lat}/lon/${lon}/dist/${nm}`, { signal: AbortSignal.timeout(8000) });
-    if (!r.ok) throw new Error('adsb.lol ' + r.status);
-    return (await r.json()).ac || [];
-  }));
+// Public ADS-B aggregators that share the same readsb JSON format ({ ac: [...] }). Tried in order.
+const UA = { 'User-Agent': 'KenalLangit/1.0 (student project; https://github.com/armehh)', 'Accept': 'application/json' };
+const SOURCES = [
+  { name: 'adsb.lol',      url: (la, lo, nm) => `https://api.adsb.lol/v2/lat/${la}/lon/${lo}/dist/${nm}` },
+  { name: 'airplanes.live', url: (la, lo, nm) => `https://api.airplanes.live/v2/point/${la}/${lo}/${nm}` },
+  { name: 'adsb.fi',       url: (la, lo, nm) => `https://opendata.adsb.fi/api/v2/lat/${la}/lon/${lo}/dist/${nm}` },
+];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+async function fetchReadsb(src) {
+  const all = [];
+  for (let i = 0; i < ADSB_POINTS.length; i++) {
+    const [lat, lon, nm] = ADSB_POINTS[i];
+    if (i) await sleep(1100);                 // these services allow about 1 request per second
+    const r = await fetch(src.url(lat, lon, nm), { headers: UA, signal: AbortSignal.timeout(8000) });
+    if (!r.ok) throw new Error(`${src.name} ${r.status}`);
+    const j = await r.json();
+    all.push(...(j.ac || j.aircraft || []));
+  }
   const seen = new Set();
   const flights = [];
-  for (const a of results.flat()) {
+  for (const a of all) {
     if (!a.hex || seen.has(a.hex) || a.lat == null || a.lon == null) continue;
     seen.add(a.hex);
     if (a.alt_baro === 'ground' || !inBox(a.lat, a.lon)) continue;      // airborne, inside Malaysian airspace
@@ -90,7 +103,7 @@ async function fetchOpenSky() {
   } catch (e) {
     console.warn('OpenSky token error:', e.message, e.cause?.code || ''); // falls back to anonymous
   }
-  const r = await fetch(`https://opensky-network.org/api/states/all?${BBOX}`, { headers, signal: AbortSignal.timeout(8000) });
+  const r = await fetch(`https://opensky-network.org/api/states/all?${BBOX}`, { headers, signal: AbortSignal.timeout(6000) });
   if (!r.ok) throw new Error('opensky ' + r.status + (headers.Authorization ? ' (with token)' : ' (anonymous)'));
   const d = await r.json();
   return (d.states || [])
@@ -111,7 +124,7 @@ async function fetchOpenSky() {
 app.get('/api/flights', async (req, res) => {
   if (Date.now() - cache.t < 15000) return res.json({ source: 'cache', flights: cache.data });
   const errors = [];
-  for (const [name, fn] of [['adsb.lol', fetchAdsbLol], ['opensky', fetchOpenSky]]) {
+  for (const [name, fn] of [...SOURCES.map(s => [s.name, () => fetchReadsb(s)]), ['opensky', fetchOpenSky]]) {
     try {
       const flights = await fn();
       if (!flights.length) throw new Error('no flights returned');
