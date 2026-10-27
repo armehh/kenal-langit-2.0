@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KenalLangit</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root{--navy:#060b18;--navy2:#0d1730;--line:#1e3a6e;--red:#ff4757;--yellow:#ffc933;--green:#22c58b;--cyan:#3be8ff;--text:#eaf2ff;--muted:#8da2c7}
+  *{box-sizing:border-box;margin:0}
+  body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(circle at 20% 0%,#12275a 0%,var(--navy) 60%) fixed;color:var(--text);height:100vh;height:100dvh;display:flex;flex-direction:column}
+  header{position:relative;display:flex;align-items:center;justify-content:space-between;padding:10px 16px 12px;background:linear-gradient(90deg,#0d1730,#12275a)}
+  header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:repeating-linear-gradient(90deg,var(--red) 0 22px,#fff 22px 44px)}
+  .logo{font-weight:800;font-size:1.25rem;letter-spacing:.3px}.logo span{color:var(--cyan);text-shadow:0 0 14px rgba(59,232,255,.55)}
+  button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:10px 14px;background:#14264d;color:var(--text);transition:background .15s,transform .1s}
+  button:hover{background:var(--line)}button:active{transform:scale(.98)}button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  main{flex:1;min-height:0;position:relative;overflow:auto}
+  section{display:none;height:100%}section.on{display:block}
+  #map{height:100%;width:100%;background:var(--navy)}
+  .panel{max-width:560px;margin:0 auto;padding:18px}
+  .card{background:var(--navy2);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+  h2{margin-bottom:12px}h3{margin:18px 0 8px;color:var(--yellow)}
+  .lbl{color:var(--muted);margin:14px 0 6px;font-size:.9rem}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}.seg button.on{background:var(--cyan);color:#04101f;font-weight:700}
+  .cta{width:100%;margin-top:14px;background:linear-gradient(90deg,#0a8fb0,#2457d6);color:var(--text);font-weight:800;padding:14px}
+  .cta:hover{background:linear-gradient(90deg,#0ca4c8,#2f6bff)}
+  .bar{height:6px;background:#14264d;border-radius:4px;overflow:hidden;margin-bottom:12px}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--yellow));transition:width .3s}
+  .meta{display:flex;justify-content:space-between;color:var(--muted);font-size:.9rem}
+  .q{font-size:1.5rem;font-weight:800;margin:12px 0 14px}
+  .opts{display:grid;gap:8px}.opts button:not(.cta){text-align:left;padding:14px;border:1px solid var(--line)}
+  .opts .ok{background:var(--green);color:#03150e;border-color:var(--green)}.opts .no{background:#b3262e;border-color:#b3262e}.opts button:disabled{cursor:default;opacity:.9}
+  .fb{margin-top:12px;min-height:1.4em}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .fcw{background:var(--navy2);border-radius:12px;border:2px solid var(--line);overflow:hidden}
+  .fcw.k{border-color:var(--green)}.fcw.r{border-color:var(--yellow)}.fcw.miss{outline:2px solid var(--red)}
+  .fc{padding:16px 10px;min-height:92px;text-align:center;width:100%;background:none;border-radius:0}
+  .fc b{font-size:1.4rem;color:var(--cyan);font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;letter-spacing:2px}
+  .fcw .act{display:flex}.fcw .act button{flex:1;border-radius:0;padding:6px;background:#091226}
+  #warn{background:#b3262e;padding:8px 14px;font-size:.85rem}
+  small{color:var(--muted)}ol,ul{padding-left:22px}li{padding:6px 0;border-bottom:1px solid var(--line)}
+  input{font:inherit;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--navy);color:var(--text);width:100%;margin-top:8px}
+  input:focus-visible{outline:2px solid var(--cyan)}
+  nav{display:flex;background:#0a1226;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+  nav button{flex:1;border-radius:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.78rem;color:var(--muted);padding:8px 4px}
+  nav button.on{color:var(--cyan);box-shadow:inset 0 3px var(--cyan)}
+  nav button span{font-size:1.3rem}
+
+  /* ---- Map theme ---- */
+  .ap{position:relative;display:block;width:14px;height:14px;border-radius:50%;background:var(--red);border:2px solid var(--yellow);box-shadow:0 0 12px var(--red)}
+  .ap::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:2px solid var(--cyan);opacity:0;animation:ping 2.4s ease-out infinite;animation-delay:var(--d,0s)}
+  @keyframes ping{0%{transform:scale(.4);opacity:.9}100%{transform:scale(1.5);opacity:0}}
+  @media (prefers-reduced-motion:reduce){.ap::after{animation:none}}
+  .plane{font-size:22px;line-height:22px;text-align:center;text-shadow:0 0 8px currentColor,0 0 2px #000}
+  .chip{background:rgba(6,11,24,.85);border:1px solid var(--line);padding:5px 12px;border-radius:999px;font-size:12px;color:var(--text)}
+  .chip.live{border-color:var(--green)}
+  .leaflet-touch .leaflet-bar{border-color:var(--line)}
+  .leaflet-bar a{background:var(--navy2);color:var(--text);border-bottom-color:var(--line)}
+  .leaflet-bar a:hover{background:var(--line);color:var(--text)}
+  .leaflet-container .leaflet-control-attribution{background:rgba(6,11,24,.75);color:var(--muted)}
+  .leaflet-control-attribution a{color:var(--cyan)}
+  .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--navy2);color:var(--text);border:1px solid var(--line)}
+  .leaflet-popup-content{line-height:1.45}.leaflet-popup-content b{color:var(--cyan)}
+  .leaflet-container a.leaflet-popup-close-button{color:var(--muted)}
+  .leaflet-tooltip{background:var(--navy2);color:var(--text);border:1px solid var(--line);box-shadow:none}
+  .leaflet-tooltip-top:before{border-top-color:var(--line)}.leaflet-tooltip-bottom:before{border-bottom-color:var(--line)}
+  .leaflet-tooltip-left:before{border-left-color:var(--line)}.leaflet-tooltip-right:before{border-right-color:var(--line)}
+  </style>
+  <link rel="stylesheet" href="extras.css">
+</head>
+<body>
+<header><div class="logo">Kenal<span>Langit</span></div><button id="lang"></button></header>
+<div id="warn" data-i="filewarn" hidden></div>
+<main>
+  <section id="map" class="on"></section>
+  <section id="quiz"><div class="panel"><div class="card" id="qbox"></div></div></section>
+  <section id="learn"><div class="panel" id="lbox"></div></section>
+  <section id="board"><div class="panel"><div class="card"><h2 data-i="board"></h2><div id="bbox"></div></div></div></section>
+</main>
+<nav>
+  <button data-tab="map" class="on"><span>🗺️</span><b data-i="map"></b></button>
+  <button data-tab="quiz"><span>🎯</span><b data-i="quiz"></b></button>
+  <button data-tab="learn"><span>📚</span><b data-i="learn"></b></button>
+  <button data-tab="board"><span>🏆</span><b data-i="board"></b></button>
+</nav>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+// ---------- DATA (check coordinates and facts against OurAirports before publishing) ----------
+// [IATA, ICAO, city, type (i=international, d=domestic), lat, lng, state, fact EN, fact MS]
+const AIRPORTS=[
+["KUL","WMKK","Kuala Lumpur","i",2.7456,101.7099,"Selangor","Malaysia's busiest airport.","Lapangan terbang tersibuk Malaysia."],
+["PEN","WMKP","Penang","i",5.2971,100.2770,"Pulau Pinang","Gateway to Penang's street food.","Pintu masuk ke makanan jalanan Pulau Pinang."],
+["LGK","WMKL","Langkawi","i",6.3297,99.7287,"Kedah","Gateway to a UNESCO Global Geopark island.","Pintu masuk ke pulau Geopark Global UNESCO."],
+["BKI","WBKK","Kota Kinabalu","i",5.9372,116.0510,"Sabah","Gateway to Mount Kinabalu.","Pintu masuk ke Gunung Kinabalu."],
+["KCH","WBGG","Kuching","i",1.4847,110.3470,"Sarawak","Kuching is nicknamed the Cat City.","Kuching dikenali sebagai Bandar Kucing."],
+["JHB","WMKJ","Johor Bahru","i",1.6413,103.6697,"Johor","Serves Malaysia's southern gateway to Singapore.","Lapangan terbang untuk pintu masuk selatan Malaysia ke Singapura."],
+["MYY","WBGR","Miri","d",4.3220,113.9867,"Sarawak","Gateway to Mulu National Park.","Pintu masuk ke Taman Negara Mulu."],
+["SZB","WMSA","Subang","d",3.1306,101.5490,"Selangor","Former main airport of Kuala Lumpur.","Bekas lapangan terbang utama Kuala Lumpur."],
+["KBR","WMKC","Kota Bharu","d",6.1668,102.2929,"Kelantan","Serves Kelantan, on the east coast.","Lapangan terbang untuk Kelantan, di pantai timur."],
+["TGG","WMKN","Kuala Terengganu","d",5.3826,103.1030,"Terengganu","Serves Terengganu, known for songket weaving.","Lapangan terbang untuk Terengganu, terkenal dengan tenunan songket."],
+["KUA","WMKD","Kuantan","d",3.7754,103.2093,"Pahang","Serves Pahang's east coast.","Lapangan terbang untuk pantai timur Pahang."],
+["IPH","WMKI","Ipoh","d",4.5680,101.0920,"Perak","Serves Ipoh, famous for its white coffee.","Lapangan terbang untuk Ipoh, terkenal dengan kopi putih."],
+["AOR","WMKA","Alor Setar","d",6.1897,100.3983,"Kedah","Serves Kedah, the rice bowl of Malaysia.","Lapangan terbang untuk Kedah, jelapang padi Malaysia."],
+["SBW","WBGS","Sibu","d",2.2616,111.9850,"Sarawak","Serves Sibu on the Rajang River.","Lapangan terbang untuk Sibu, di tepi Sungai Rajang."],
+["BTU","WBGB","Bintulu","d",3.1239,113.0201,"Sarawak","Serves Bintulu in central Sarawak.","Lapangan terbang untuk Bintulu, di tengah Sarawak."],
+["LBU","WBKL","Labuan","d",5.3007,115.2500,"W.P. Labuan","Serves the island of Labuan.","Lapangan terbang untuk pulau Labuan."],
+["SDK","WBKS","Sandakan","d",5.9009,118.0594,"Sabah","Serves Sandakan, near Sepilok orangutan sanctuary.","Lapangan terbang untuk Sandakan, berhampiran Pusat Pemulihan Orang Utan Sepilok."],
+["TWU","WBKW","Tawau","d",4.3133,118.1219,"Sabah","Serves Tawau in eastern Sabah.","Lapangan terbang untuk Tawau, di timur Sabah."]
+].map(a=>({iata:a[0],icao:a[1],city:a[2],intl:a[3]=="i",lat:a[4],lng:a[5],state:a[6],fact:{en:a[7],ms:a[8]}}));
+// Official names, following the Ministry of Transport Malaysia list: [BM, EN]
+const NAMES={
+KUL:["Lapangan Terbang Antarabangsa Kuala Lumpur","Kuala Lumpur International Airport"],
+PEN:["Lapangan Terbang Antarabangsa Pulau Pinang","Penang International Airport"],
+LGK:["Lapangan Terbang Antarabangsa Langkawi","Langkawi International Airport"],
+BKI:["Lapangan Terbang Antarabangsa Kota Kinabalu","Kota Kinabalu International Airport"],
+KCH:["Lapangan Terbang Antarabangsa Kuching","Kuching International Airport"],
+JHB:["Lapangan Terbang Antarabangsa Senai","Senai International Airport"],
+MYY:["Lapangan Terbang Miri","Miri Airport"],
+SZB:["Terminal Skypark Lapangan Terbang Sultan Abdul Aziz Shah","Sultan Abdul Aziz Shah Airport (Skypark Terminal)"],
+KBR:["Lapangan Terbang Sultan Ismail Petra","Sultan Ismail Petra Airport"],
+TGG:["Lapangan Terbang Sultan Mahmud","Sultan Mahmud Airport"],
+KUA:["Lapangan Terbang Sultan Ahmad Shah","Sultan Ahmad Shah Airport"],
+IPH:["Lapangan Terbang Sultan Azlan Shah","Sultan Azlan Shah Airport"],
+AOR:["Lapangan Terbang Sultan Abdul Halim","Sultan Abdul Halim Airport"],
+SBW:["Lapangan Terbang Sibu","Sibu Airport"],
+BTU:["Lapangan Terbang Bintulu","Bintulu Airport"],
+LBU:["Lapangan Terbang Labuan","Labuan Airport"],
+SDK:["Lapangan Terbang Sandakan","Sandakan Airport"],
+TWU:["Lapangan Terbang Tawau","Tawau Airport"]
+};
+const nameOf=(a,l)=>NAMES[a.iata][l=="ms"?0:1];
+const REG=a=>a.state=="Sarawak"?"Sarawak":(a.state=="Sabah"||a.state=="W.P. Labuan")?"Sabah":"Semenanjung";
+const T={
+ms:{map:"Peta",quiz:"Kuiz",learn:"Belajar",board:"Papan Markah",lang:"EN",level:"Tahap",mode:"Mod",easy:"Mudah (utama)",med:"Sederhana (semua)",hard:"Sukar (domestik)",m1:"Kod → Nama",m2:"Nama → Kod",start:"Mula",next:"Seterusnya",score:"Skor",right:"Betul! Teruskan streak awak.",wrong:"Salah. Jawapan: ",done:"Tamat!",acc:"Ketepatan",missed:"Jawapan yang salah",none:"Tiada kesilapan, hebat!",again:"Main lagi",review:"Semak di tab Belajar",nick:"Nama awak",send:"Hantar skor",sent:"Skor dihantar!",fail:"Skor gagal dihantar. Pastikan pelayan sedang berjalan.",flip:"Ketik kad untuk pusingkan. ✓ = sudah tahu, ↻ = ulang.",live:"Live",sample:"Data contoh",plane:"pesawat",empty:"Belum ada skor.",offline:"Papan markah memerlukan pelayan. Jalankan npm start.",Semenanjung:"Semenanjung Malaysia",Sabah:"Sabah",Sarawak:"Sarawak",known:"sudah tahu",filewarn:"Buka melalui http://localhost:3000 (jalankan npm start di folder backend), bukan terus dari fail. Jika tidak, peta dan data penerbangan langsung tidak akan berfungsi."},
+en:{map:"Map",quiz:"Quiz",learn:"Learn",board:"Leaderboard",lang:"BM",level:"Level",mode:"Mode",easy:"Easy (major)",med:"Medium (all)",hard:"Hard (domestic)",m1:"Code → Name",m2:"Name → Code",start:"Start",next:"Next",score:"Score",right:"Correct! Keep your streak going.",wrong:"Wrong. Answer: ",done:"Finished!",acc:"Accuracy",missed:"Missed",none:"No mistakes, great!",again:"Play again",review:"Review in Learn",nick:"Your name",send:"Submit score",sent:"Score submitted!",fail:"Could not submit. Is the backend running?",flip:"Click a card to flip. ✓ = known, ↻ = review again.",live:"Live",sample:"Sample data",plane:"aircraft",empty:"No scores yet.",offline:"The leaderboard needs the backend (npm start).",Semenanjung:"Peninsular Malaysia",Sabah:"Sabah",Sarawak:"Sarawak",known:"known",filewarn:"Open via http://localhost:3000 (run npm start in the backend folder), not directly from the file. Otherwise the map and live data will not work."}
+};
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const ls={get:(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v===null?d:v}catch(e){return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let lang=ls.get("kl-lang","ms"),cfg={lv:"med",md:1},Q=null,missedSet=new Set(),flip={},flightSrc="sample",flightN=0;
+const t=k=>T[lang][k];
+const shuffle=a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(x=>x[1]);
+
+function applyLang(){
+  document.documentElement.lang=lang;$("#lang").textContent=t("lang");
+  $$("[data-i]").forEach(e=>e.textContent=t(e.dataset.i));
+  buildMarkers();updateChip();buildCards();
+  if(Q&&!Q.finished)ask(true);else if(!Q)setup();
+  if($("#board").classList.contains("on"))loadBoard();
+}
+$("#lang").onclick=()=>{lang=lang=="ms"?"en":"ms";ls.set("kl-lang",lang);applyLang()};
+function go(tab){
+  $$("nav button").forEach(x=>x.classList.toggle("on",x.dataset.tab==tab));
+  $$("section").forEach(s=>s.classList.toggle("on",s.id==tab));
+  if(tab=="map")map.invalidateSize();
+  if(tab=="board")loadBoard();
+  if(tab=="learn")buildCards();
+}
+$$("nav button").forEach(b=>b.onclick=()=>go(b.dataset.tab));
+
+// ---------- MAP ----------
+const map=L.map("map").setView([4.2,109.5],6);
+const CARTO_KEY="cb1_4qmp_1_04adf6eea4fdfd20309cb292";
+L.tileLayer("https://basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}/{y}{r}.png?key="+CARTO_KEY,{attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',maxZoom:12}).addTo(map);
+const apLayer=L.layerGroup().addTo(map),acLayer=L.layerGroup().addTo(map);
+function buildMarkers(){
+  apLayer.clearLayers();
+  AIRPORTS.forEach((a,i)=>L.marker([a.lat,a.lng],{icon:L.divIcon({className:"",html:`<span class="ap" style="--d:${((i*0.37)%2.4).toFixed(2)}s"></span>`,iconSize:[14,14],iconAnchor:[7,7],popupAnchor:[0,-8]})})
+    .bindPopup(`<b>${a.iata} / ${a.icao}</b><br>${nameOf(a,lang)}<br><small>${a.state}</small><br>${a.fact[lang]}`).addTo(apLayer));
+}
+const SAMPLE=[["MAS123",3.0,101.9,45],["AXM456",5.5,100.5,300],["FFM789",1.8,110.1,90],["BTK321",5.8,116.4,180],["MXD654",6.2,100.0,0]];
+const COLORS={MAS:"#e63946",AXM:"#ff2d2d",OXB:"#f4a300",FFM:"#ff7a00",MXD:"#3aa0ff"};
+function plane(f){
+  const c=COLORS[(f.cs||"").slice(0,3)]||"#ffffff";
+  L.marker([f.lat,f.lng],{icon:L.divIcon({className:"",html:`<div class="plane" style="color:${c};transform:rotate(${(f.hdg||0)-45}deg)">✈</div>`,iconSize:[22,22]})}).bindTooltip(f.cs||"?").addTo(acLayer);
+}
+const chipEl=document.createElement("div");chipEl.className="chip";
+const chipCtl=L.control({position:"topright"});chipCtl.onAdd=()=>chipEl;chipCtl.addTo(map);
+function updateChip(){chipEl.classList.toggle("live",flightSrc=="live");chipEl.textContent=flightSrc=="live"?`● ${t("live")} · ${flightN} ${t("plane")}`:`○ ${t("sample")}`}
+async function loadFlights(){
+  let list=[];flightSrc="sample";
+  try{const d=await (await fetch("/api/flights")).json();if(d.flights&&d.flights.length){list=d.flights;flightSrc="live"}}catch(e){}
+  if(!list.length)list=SAMPLE.map(s=>({cs:s[0],lat:s[1],lng:s[2],hdg:s[3]}));
+  acLayer.clearLayers();list.forEach(plane);flightN=list.length;updateChip();
+}
+loadFlights();setInterval(loadFlights,30000);
+
+// ---------- QUIZ ----------
+const poolOf=()=>cfg.lv=="easy"?AIRPORTS.filter(a=>a.intl):cfg.lv=="hard"?AIRPORTS.filter(a=>!a.intl):AIRPORTS;
+const seg=(id,items,cur)=>`<div class="seg" id="${id}">${items.map(k=>`<button data-v="${k}" class="${k==cur?"on":""}">${t(k)}</button>`).join("")}</div>`;
+function setup(){
+  Q=null;
+  $("#qbox").innerHTML=`<h2>${t("quiz")}</h2><p class="lbl">${t("level")}</p>${seg("lv",["easy","med","hard"],cfg.lv)}<p class="lbl">${t("mode")}</p>${seg("md",["m1","m2"],"m"+cfg.md)}<button class="cta" id="go">${t("start")}</button>`;
+  $$("#lv button").forEach(b=>b.onclick=()=>{cfg.lv=b.dataset.v;setup()});
+  $$("#md button").forEach(b=>b.onclick=()=>{cfg.md=b.dataset.v=="m1"?1:2;setup()});
+  $("#go").onclick=()=>{const pool=poolOf();Q={pool,list:shuffle(pool).slice(0,10),i:0,score:0,streak:0,missed:[],opts:null,finished:false};ask()};
+}
+function ask(redraw){
+  if(Q.i>=Q.list.length)return finish();
+  const cur=Q.list[Q.i];
+  if(!redraw||!Q.opts)Q.opts=shuffle([cur,...shuffle(Q.pool.filter(a=>a!==cur)).slice(0,3)]);
+  $("#qbox").innerHTML=`<div class="bar"><i style="width:${Q.i/Q.list.length*100}%"></i></div>
+  <div class="meta"><span>${Q.i+1}/${Q.list.length}</span><span>${t("score")}: ${Q.score} · 🔥${Q.streak}</span></div>
+  <div class="q">${cfg.md==1?cur.iata:nameOf(cur,lang)}?</div><div class="opts" id="opts"></div><p class="fb" id="fb"></p>`;
+  const box=$("#opts"),ans=cfg.md==1?nameOf(cur,lang):cur.iata;
+  Q.opts.forEach(o=>{
+    const b=document.createElement("button");b.textContent=cfg.md==1?nameOf(o,lang):o.iata;
+    b.onclick=()=>{
+      const good=o===cur;
+      $$("#opts button").forEach(x=>x.disabled=true);
+      b.classList.add(good?"ok":"no");
+      if(!good)[...box.children].find(x=>x.textContent==ans).classList.add("ok");
+      if(good){Q.score+=10+Q.streak*2;Q.streak++;$("#fb").textContent=t("right")}
+      else{Q.streak=0;Q.missed.push(cur.iata);$("#fb").textContent=t("wrong")+ans}
+      const n=document.createElement("button");n.className="cta";n.textContent=t("next");
+      n.onclick=()=>{Q.i++;Q.opts=null;ask()};box.appendChild(n);n.focus();
+    };
+    box.appendChild(b);
+  });
+}
+function finish(){
+  Q.finished=true;
+  const total=Q.list.length,ok=total-Q.missed.length,miss=Q.missed.map(c=>AIRPORTS.find(a=>a.iata==c));
+  missedSet=new Set(Q.missed);
+  $("#qbox").innerHTML=`<h2>${t("done")}</h2><div class="q">${t("score")}: ${Q.score}</div><p>${t("acc")}: ${ok}/${total}</p>
+  <h3>${t("missed")}</h3>${miss.length?`<ul>${miss.map(a=>`<li><b>${a.iata}</b> ${nameOf(a,lang)}</li>`).join("")}</ul>`:`<p>${t("none")}</p>`}
+  <input id="nick" maxlength="20" placeholder="${t("nick")}"><button class="cta" id="send">${t("send")}</button><p class="fb" id="fb"></p>
+  <button class="cta" id="again" style="background:#1e3a6b">${t("again")}</button>${miss.length?`<button class="cta" id="rev" style="background:#1e3a6b">${t("review")}</button>`:""}`;
+  $("#nick").value=ls.get("kl-name","");
+  $("#again").onclick=setup;
+  if($("#rev"))$("#rev").onclick=()=>go("learn");
+  $("#send").onclick=async()=>{
+    const name=$("#nick").value.trim();if(!name)return $("#nick").focus();
+    ls.set("kl-name",name);
+    try{
+      const r=await fetch("/api/leaderboard",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,score:Q.score,level:cfg.lv,mode:cfg.md})});
+      if(!r.ok)throw 0;$("#fb").textContent=t("sent");$("#send").disabled=true;
+    }catch(e){$("#fb").textContent=t("fail")}
+  };
+}
+
+// ---------- LEARN ----------
+function buildCards(){
+  const known=ls.get("kl-known",{});
+  const n=AIRPORTS.filter(a=>known[a.iata]===1).length;
+  let h=`<p style="color:var(--muted)">${t("flip")}</p><p><b>${n}/${AIRPORTS.length}</b> ${t("known")}</p>`;
+  ["Semenanjung","Sabah","Sarawak"].forEach(r=>{
+    h+=`<h3>${t(r)}</h3><div class="grid">`;
+    AIRPORTS.filter(a=>REG(a)==r).forEach(a=>{
+      const st=known[a.iata]===1?"k":known[a.iata]===0?"r":"",f=flip[a.iata];
+      h+=`<div class="fcw ${st} ${missedSet.has(a.iata)?"miss":""}"><button class="fc" data-f="${a.iata}">${f?`${nameOf(a,lang)}<br><small>${a.state}</small>`:`<b>${a.iata}</b><br><small>${a.icao}</small>`}</button>
+      <div class="act"><button data-k="${a.iata}" data-v="1" aria-label="${t("known")}">✓</button><button data-k="${a.iata}" data-v="0" aria-label="review">↻</button></div></div>`;
+    });
+    h+=`</div>`;
+  });
+  $("#lbox").innerHTML=h;
+  $$("#lbox .fc").forEach(b=>b.onclick=()=>{flip[b.dataset.f]=!flip[b.dataset.f];buildCards()});
+  $$("#lbox .act button").forEach(b=>b.onclick=()=>{known[b.dataset.k]=+b.dataset.v;ls.set("kl-known",known);buildCards()});
+}
+
+// ---------- LEADERBOARD ----------
+async function loadBoard(){
+  const box=$("#bbox");
+  try{
+    const r=await fetch("/api/leaderboard");if(!r.ok)throw 0;
+    const list=await r.json();
+    if(!list.length){box.textContent=t("empty");return}
+    box.innerHTML="";const ol=document.createElement("ol");
+    list.forEach(e=>{const li=document.createElement("li");li.textContent=`${e.name} — ${e.score}`;const s=document.createElement("small");s.textContent=` (${t(e.level)})`;li.appendChild(s);ol.appendChild(li)});
+    box.appendChild(ol);
+  }catch(e){box.textContent=t("offline")}
+}
+if(location.protocol=="file:")$("#warn").hidden=false;
+applyLang();
+</script>
+<script src="aviation.js"></script>
+<script src="kuiz.js"></script>
+<script src="extras.js"></script>
+<script src="characters.js"></script>
+<script src="panel.js"></script>
+<script src="route.js"></script>
+<script src="status.js"></script>
+<script src="tour.js"></script>
+<script src="videos.js"></script>
+</body>
+</html>
