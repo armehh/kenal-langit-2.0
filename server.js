@@ -2,7 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-
+require('dns').setDefaultResultOrder('ipv4first');
+require('net').setDefaultAutoSelectFamily(false);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -66,7 +67,7 @@ async function fetchReadsb(src) {
   for (let i = 0; i < ADSB_POINTS.length; i++) {
     const [lat, lon, nm] = ADSB_POINTS[i];
     if (i) await sleep(1100);                 // these services allow about 1 request per second
-    const r = await fetch(src.url(lat, lon, nm), { headers: UA, signal: AbortSignal.timeout(8000) });
+    const r = await fetch(src.url(lat, lon, nm), { headers: UA, signal: AbortSignal.timeout(20000) });
     if (!r.ok) throw new Error(`${src.name} ${r.status}`);
     const j = await r.json();
     all.push(...(j.ac || j.aircraft || []));
@@ -253,6 +254,54 @@ app.get('/api/status/:callsign', async (req, res) => {
     console.warn('Status error:', e.message);
     if (e.message === 'daily cap reached') return res.status(503).json({ error: 'daily_cap' });    
     res.status(502).json({ error: 'status_unavailable' });
+  }
+});
+
+// ---------- Airport weather: METAR via aviationweather.gov (free, no key) ----------
+// weather.js (frontend) calls /api/weather/:icao and expects { weather: {...} | null }.
+const wxCache = new Map();                // icao -> { t, data }
+const WX_TTL = 5 * 60 * 1000;             // METARs are issued every 30 min, so 5 min is plenty
+const wxHits = new Map();                 // ip -> { t, n }
+const wxLimited = ip => {
+  const now = Date.now(), h = wxHits.get(ip);
+  if (wxHits.size > 1000) wxHits.clear();
+  if (!h || now - h.t > 60000) { wxHits.set(ip, { t: now, n: 1 }); return false; }
+  return ++h.n > 30;
+};
+
+app.get('/api/weather/:icao', async (req, res) => {
+  const icao = String(req.params.icao || '').trim().toUpperCase();
+  if (!/^W[MB][A-Z]{2}$/.test(icao)) return res.status(400).json({ error: 'Invalid ICAO' });
+  const hit = wxCache.get(icao);
+  if (hit && Date.now() - hit.t < WX_TTL) return res.json({ weather: hit.data, cached: true });
+  if (wxLimited(req.ip)) return res.status(429).json({ error: 'Too many requests' });
+  try {
+    const r = await fetch(`https://aviationweather.gov/api/data/metar?ids=${icao}&format=json`, { signal: AbortSignal.timeout(15000) });
+    if (!r.ok && r.status !== 204) throw new Error('aviationweather ' + r.status);
+    const text = r.status === 204 ? '' : await r.text();   // empty body = no recent report
+    const data = text.trim() ? JSON.parse(text) : [];
+    const m = Array.isArray(data) ? data[0] : null;
+    // Rename fields to what weather.js expects
+    const weather = m ? {
+      temp: m.temp,
+      dewp: m.dewp,
+      wdir: m.wdir,
+      wspd: m.wspd,
+      wgst: m.wgst,
+      visib: m.visib,
+      altim: m.altim,
+      clouds: m.clouds,
+      wx: m.wxString,
+      cat: m.fltCat,
+      raw: m.rawOb,
+      observed: m.obsTime,
+    } : null;
+    if (wxCache.size > 100) wxCache.delete(wxCache.keys().next().value);
+    wxCache.set(icao, { t: Date.now(), data: weather });
+    res.json({ weather });
+  } catch (e) {
+    console.warn('Weather error:', e.message);
+    res.status(502).json({ error: 'Weather unavailable' });
   }
 });
 
