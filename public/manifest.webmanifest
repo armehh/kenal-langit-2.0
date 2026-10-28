@@ -1,0 +1,19 @@
+{
+  "id": "/",
+  "name": "KenalLangit",
+  "short_name": "KenalLangit",
+  "description": "Pengesan penerbangan Malaysia dan kuiz kod lapangan terbang. Malaysian flight tracker and airport-code quiz.",
+  "lang": "ms",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#060b18",
+  "theme_color": "#0d1730",
+  "categories": ["education", "travel"],
+  "icons": [
+    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "img/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
