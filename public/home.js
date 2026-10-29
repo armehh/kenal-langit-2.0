@@ -13,14 +13,14 @@ ms:{about:"Tentang projek",madeBy:"Dibina oleh",guest:"Kadet",nameLbl:"Tukar nam
   live:"Di langit sekarang",sample:"Data contoh",planes:"pesawat",byAir:"Mengikut syarikat",other:"Lain-lain",highest:"Paling tinggi",fastest:"Paling laju",kmh:"km/j",tap:"Ketik untuk lihat di peta.",nodata:"Tiada data penerbangan buat masa ini.",
   wx:"Cuaca KUL",load:"Memuatkan...",temp:"Suhu",wind:"Angin",vis:"Penglihatan",calm:"Tenang",vrb:"Berubah-ubah",obs:"Dilaporkan",ago:"lalu",min:"min",hr:"jam",wxNone:"Tiada laporan METAR terkini.",wxErr:"Cuaca tidak tersedia buat masa ini.",onmap:"Lihat di peta",src:"Sumber: AviationWeather.gov (NOAA)",
   VFR:"VFR · baik untuk terbang",MVFR:"MVFR · sederhana",IFR:"IFR · penglihatan rendah",LIFR:"LIFR · sangat rendah",
-  prog:"Kemajuan awak",rank:"Pangkat",noRank:"Main kuiz untuk dapat pangkat.",apKnown:"Lapangan terbang dikenali",units:"Unit Belajar selesai",last:"Kuiz terakhir",best:"Skor terbaik",noQuiz:"Belum ada kuiz.",correct:"betul",pts:"mata",top3:"3 teratas",
+  prog:"Kemajuan awak",syncAnon:"Kemajuan disimpan dalam awan, tetapi terikat pada pelayar ini. Sambung dengan Google untuk guna di peranti lain.",syncGoogle:e=>`Disegerakkan sebagai ${e}`,gConn:"Sambung dengan Google",gOut:"Log keluar",gOutAsk:"Log keluar dan kosongkan kemajuan di peranti ini? Kemajuan kekal selamat dalam akaun awak.",gErr:"Tidak dapat menyambung. Cuba lagi.",rank:"Pangkat",noRank:"Main kuiz untuk dapat pangkat.",apKnown:"Lapangan terbang dikenali",units:"Unit Belajar selesai",last:"Kuiz terakhir",best:"Skor terbaik",noQuiz:"Belum ada kuiz.",correct:"betul",pts:"mata",top3:"3 teratas",
   r4:"Kapten",r3:"Pegawai Pertama",r2:"Juruterbang Pelatih",r1:"Penumpang Setia",
   qa:"Tindakan pantas",cont:n=>`Sambung: Unit ${n}`,contAll:"Semak kad lapangan terbang",qz:"Mula kuiz",qzSub:"Pilih mod dan tahap",busy:"Kuiz lapangan tersibuk",busySub:(a,n)=>`${a}: ${n} pesawat berhampiran`},
 en:{about:"About this project",madeBy:"Built by",guest:"Cadet",nameLbl:"Change name",namePh:"Your name",save:"Save",cancel:"Cancel",ghBtn:"GitHub",liBtn:"LinkedIn",star:"Star it on GitHub",credits:"Credits",creditsTxt:"Flight, weather, route, status and map data come from the public sources below. Videos belong to their YouTube channel owners. A learning project, not for real flight navigation.",logo:"Home",hi:n=>`Hi, ${n}`,welcome:"Welcome",sub:"Malaysia's sky right now.",
   live:"In the sky now",sample:"Sample data",planes:"aircraft",byAir:"By airline",other:"Other",highest:"Highest",fastest:"Fastest",kmh:"km/h",tap:"Tap to see it on the map.",nodata:"No flight data right now.",
   wx:"KUL weather",load:"Loading...",temp:"Temperature",wind:"Wind",vis:"Visibility",calm:"Calm",vrb:"Variable",obs:"Reported",ago:"ago",min:"min",hr:"h",wxNone:"No recent METAR report.",wxErr:"Weather is unavailable right now.",onmap:"View on map",src:"Source: AviationWeather.gov (NOAA)",
   VFR:"VFR · good flying weather",MVFR:"MVFR · marginal",IFR:"IFR · low visibility",LIFR:"LIFR · very low",
-  prog:"Your progress",rank:"Rank",noRank:"Play a quiz to earn a rank.",apKnown:"Airports known",units:"Learn units done",last:"Last quiz",best:"Best score",noQuiz:"No quiz yet.",correct:"correct",pts:"pts",top3:"Top 3",
+  prog:"Your progress",syncAnon:"Your progress is saved in the cloud, but tied to this browser. Connect Google to use it on another device.",syncGoogle:e=>`Synced as ${e}`,gConn:"Connect with Google",gOut:"Sign out",gOutAsk:"Sign out and clear progress on this device? It stays safe in your account.",gErr:"Could not connect. Please try again.",rank:"Rank",noRank:"Play a quiz to earn a rank.",apKnown:"Airports known",units:"Learn units done",last:"Last quiz",best:"Best score",noQuiz:"No quiz yet.",correct:"correct",pts:"pts",top3:"Top 3",
   r4:"Captain",r3:"First Officer",r2:"Trainee Pilot",r1:"Loyal Passenger",
   qa:"Quick actions",cont:n=>`Continue: Unit ${n}`,contAll:"Review airport cards",qz:"Start a quiz",qzSub:"Pick a mode and level",busy:"Quiz the busiest airport",busySub:(a,n)=>`${a}: ${n} aircraft nearby`}
 };
@@ -62,6 +62,7 @@ st.textContent=`
 .hm-row:hover{background:#14264d}
 .hm-row .l{color:var(--muted);font-size:.8rem;min-width:5.6rem}.hm-row b{flex:1;font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;color:var(--cyan)}.hm-row .v{font-size:.85rem;white-space:nowrap}
 .hm-note{color:var(--muted);font-size:.78rem;margin-top:8px}
+.hm-sync{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}.hm-sync .hm-lk{margin-top:10px;cursor:pointer}
 .hm-wx{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:.9rem;margin:10px 0 0}.hm-wx dt{color:var(--muted)}.hm-wx dd{margin:0}
 .hm-cat{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.78rem;font-weight:700}
 .hm-VFR{background:rgba(34,197,139,.18);color:var(--green)}.hm-MVFR{background:rgba(80,140,255,.2);color:#7aa8ff}
@@ -205,6 +206,13 @@ function wxCard(){
   }
   return `<div class="card hm-wxc"><h2 class="hm-h"><span>☁ ${h("wx")}</span><span class="hm-tag">WMKK</span></h2>${body}<p style="margin-top:10px"><button class="hm-link" data-a="kul">${h("onmap")} →</button></p></div>`;
 }
+function syncRow(){
+  const S=window.KLSync&&KLSync.state();
+  if(!S||!S.configured||!S.ready)return "";
+  return S.google
+    ?`<div class="hm-sync"><p class="hm-note">${esc(h("syncGoogle")(S.email))}</p><button class="hm-link" data-a="gout">${h("gOut")}</button></div>`
+    :`<div class="hm-sync"><p class="hm-note">${h("syncAnon")}</p><button class="hm-lk pri" data-a="gconn"><span>${h("gConn")}</span></button><p class="hm-note" id="hsErr" hidden>${h("gErr")}</p></div>`;
+}
 function progCard(){
   const kn=ls.get("kl-known",{}),nk=AIRPORTS.filter(a=>kn[a.iata]===1).length,nt=AIRPORTS.length;
   const p=course(),nu=KL_UNITS.filter(u=>(p[u.id]||0)>=2).length,tu=KL_UNITS.length;
@@ -220,7 +228,8 @@ function progCard(){
   ${bar(h("apKnown"),nk,nt)}${bar(h("units"),nu,tu)}
   <div class="hm-kv" style="margin-top:14px"><span>${h("last")}</span><b>${last&&last.n?`${last.s} ${h("pts")} · ${last.ok}/${last.n} ${h("correct")}`:h("noQuiz")}</b></div>
   ${best?`<div class="hm-kv"><span>${h("best")}</span><b>${best} ${h("pts")}</b></div>`:""}
-  ${board&&board.length?`<div class="hm-sub" style="margin-top:14px">${h("top3")}</div><ul class="hm-top3">${board.map((e,i)=>`<li><span>${MEDAL[i]} ${esc(e.name)}${nm&&e.name==nm?" ⭐":""}</span><b>${esc(e.score)}</b></li>`).join("")}</ul>`:""}</div>`;
+  ${board&&board.length?`<div class="hm-sub" style="margin-top:14px">${h("top3")}</div><ul class="hm-top3">${board.map((e,i)=>`<li><span>${MEDAL[i]} ${esc(e.name)}${nm&&e.name==nm?" ⭐":""}</span><b>${esc(e.score)}</b></li>`).join("")}</ul>`:""}
+  ${syncRow()}</div>`;
 }
 function actCard(){
   const nx=nextUnit(),bz=busiest();
@@ -290,6 +299,8 @@ box.addEventListener("click",e=>{
   else if(a=="busy"){const z=busiest();if(z)quizAirport(z.a)}
   else if(a=="cont"){const n=nextUnit();if(n)openLearn("unit",n.u.id)}
   else if(a=="cards")openLearn("cards");
+  else if(a=="gconn"){b.disabled=true;KLSync.link().catch(()=>{b.disabled=false;const m=$("#hsErr");if(m)m.hidden=false})}
+  else if(a=="gout"){if(confirm(h("gOutAsk")))KLSync.signOut().catch(()=>{})}
   else if(a=="name"){
     editing=true;box.querySelector(".hm-top").innerHTML=topBlock(ls.get("kl-name",""))+`<p>${h("sub")}</p>`;
     const i=$("#hni");if(i){i.focus();i.select()}
