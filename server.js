@@ -11,7 +11,7 @@ const BBOX = 'lamin=0.8&lomin=99.5&lamax=7.4&lomax=119.5'; // Malaysian airspace
 const DATA_FILE = path.join(__dirname, 'data', 'leaderboard.json');
 
 app.set('trust proxy', 1); // Render sits behind a proxy; this makes req.ip the real visitor IP
-app.use(express.json({ limit: '2kb' }));
+app.use(express.json({ limit: '8kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ---------- Flights: proxy OpenSky with a short cache ----------
@@ -372,6 +372,95 @@ app.post('/api/leaderboard', async (req, res) => {
   } catch (e) {
     console.warn('Leaderboard write error:', e.message);
     res.status(502).json({ error: 'Leaderboard unavailable' });
+  }
+});
+
+// ---------- User progress: Firebase Auth (anonymous / Google) + one Firestore document per user ----------
+// The browser signs in with the Firebase web SDK and sends its ID token; the server verifies it and reads/writes users/{uid}.
+// Clients never touch Firestore directly, so no security rules are needed (keep the default deny-all rules).
+// Web config (public, not a secret): set FIREBASE_WEB_CONFIG to the JSON of your web app's firebaseConfig, on one line.
+let fbAuth = null;
+if (fsdb) {
+  try { fbAuth = require('firebase-admin/auth').getAuth(); } catch (e) { console.warn('Firebase Auth unavailable:', e.message); }
+}
+let webConfig = null;
+try {
+  if (process.env.FIREBASE_WEB_CONFIG) {
+    const c = JSON.parse(process.env.FIREBASE_WEB_CONFIG);
+    if (c.apiKey && c.authDomain && c.projectId && c.appId) webConfig = { apiKey: c.apiKey, authDomain: c.authDomain, projectId: c.projectId, appId: c.appId };
+  }
+} catch (e) { console.warn('FIREBASE_WEB_CONFIG is not valid JSON:', e.message); }
+const syncOn = !!(fbAuth && webConfig);
+console.log('Progress sync:', syncOn ? 'on' : 'off (needs Firestore credentials and FIREBASE_WEB_CONFIG)');
+
+app.get('/api/fbconfig', (req, res) => syncOn ? res.json(webConfig) : res.status(404).json({ error: 'sync_off' }));
+
+async function requireUser(req, res, next) {
+  if (!syncOn) return res.status(503).json({ error: 'sync_off' });
+  const m = /^Bearer (.+)$/.exec(req.headers.authorization || '');
+  if (!m) return res.status(401).json({ error: 'no_token' });
+  try {
+    req.uid = (await fbAuth.verifyIdToken(m[1])).uid;
+    next();
+  } catch (e) {
+    res.status(401).json({ error: 'bad_token' });
+  }
+}
+
+// Accept only the exact shape the app writes; anything else is dropped or rejected.
+const isInt = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;
+function cleanProgress(b) {
+  if (!b || typeof b !== 'object') return null;
+  const known = {}, course = {};
+  const k = b.known && typeof b.known === 'object' ? Object.entries(b.known) : [];
+  const c = b.course && typeof b.course === 'object' ? Object.entries(b.course) : [];
+  if (k.length > 60 || c.length > 30) return null;
+  for (const [key, v] of k) { if (/^[A-Z]{3}$/.test(key) && (v === 0 || v === 1)) known[key] = v; }
+  for (const [key, v] of c) { if (/^[\w-]{1,24}$/.test(key) && isInt(v, 0, 10)) course[key] = v; }
+  let last = null;
+  const l = b.last;
+  if (l && typeof l === 'object') {
+    if (!isInt(l.s, 0, 300) || !isInt(l.n, 1, 100) || !isInt(l.ok, 0, l.n) || !Number.isFinite(l.d) || l.d < 0 || l.d > Date.now() + 864e5) return null;
+    last = { s: l.s, ok: l.ok, n: l.n, d: Math.floor(l.d) };
+  }
+  const best = b.best == null ? 0 : b.best;
+  if (!isInt(best, 0, 300)) return null;
+  const name = typeof b.name === 'string' ? b.name.replace(/[<>]/g, '').trim().slice(0, 20) : '';
+  return { known, course, last, best, name };
+}
+
+const progHits = new Map();               // uid or ip -> { t, n }: protects the Firestore free quota
+const progLimited = (id, max) => {
+  const now = Date.now(), h = progHits.get(id);
+  if (progHits.size > 2000) progHits.clear();
+  if (!h || now - h.t > 60000) { progHits.set(id, { t: now, n: 1 }); return false; }
+  return ++h.n > max;
+};
+
+app.get('/api/progress', requireUser, async (req, res) => {
+  if (progLimited('r:' + req.uid, 30)) return res.status(429).json({ error: 'too_many_requests' });
+  try {
+    const snap = await fsdb.collection('users').doc(req.uid).get();
+    if (!snap.exists) return res.json({ progress: null });
+    const { known, course, last, best, name } = snap.data();
+    res.json({ progress: { known: known || {}, course: course || {}, last: last || null, best: best || 0, name: name || '' } });
+  } catch (e) {
+    console.warn('Progress read error:', e.message);
+    res.status(502).json({ error: 'progress_unavailable' });
+  }
+});
+
+app.put('/api/progress', requireUser, async (req, res) => {
+  if (progLimited('w:' + req.uid, 20) || progLimited('ip:' + req.ip, 60)) return res.status(429).json({ error: 'too_many_requests' });
+  const p = cleanProgress(req.body);
+  if (!p) return res.status(400).json({ error: 'Invalid progress' });
+  try {
+    const { FieldValue } = require('firebase-admin/firestore');
+    await fsdb.collection('users').doc(req.uid).set({ ...p, updatedAt: FieldValue.serverTimestamp() });
+    res.json({ ok: true });
+  } catch (e) {
+    console.warn('Progress write error:', e.message);
+    res.status(502).json({ error: 'progress_unavailable' });
   }
 });
 
