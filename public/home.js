@@ -9,14 +9,14 @@ const ME={name:"Armin Rafiqin",role:{ms:"Pelajar Kejuruteraan Perisian (Pembangu
 // [label, url] shown under "Credits"
 const CREDITS=[["adsb.lol · airplanes.live · adsb.fi","https://adsb.lol"],["OpenSky Network","https://opensky-network.org"],["AviationWeather.gov (NOAA)","https://aviationweather.gov"],["adsbdb","https://www.adsbdb.com"],["AirLabs","https://airlabs.co"],["OpenStreetMap","https://www.openstreetmap.org/copyright"],["CARTO","https://carto.com/attributions"],["Leaflet","https://leafletjs.com"]];
 const H={
-ms:{about:"Tentang projek",madeBy:"Dibina oleh",ghBtn:"GitHub",liBtn:"LinkedIn",star:"Beri ⭐ di GitHub",credits:"Kredit",creditsTxt:"Data penerbangan, cuaca, laluan, status dan peta datang daripada sumber awam di bawah. Video kepunyaan pemilik saluran masing-masing di YouTube. Projek pembelajaran, bukan untuk navigasi penerbangan sebenar.",logo:"Halaman utama",hi:n=>`Hai, ${n}`,welcome:"Selamat datang",sub:"Ringkasan langit Malaysia sekarang.",
+ms:{about:"Tentang projek",madeBy:"Dibina oleh",guest:"Kadet",nameLbl:"Tukar nama",namePh:"Nama awak",save:"Simpan",cancel:"Batal",ghBtn:"GitHub",liBtn:"LinkedIn",star:"Beri ⭐ di GitHub",credits:"Kredit",creditsTxt:"Data penerbangan, cuaca, laluan, status dan peta datang daripada sumber awam di bawah. Video kepunyaan pemilik saluran masing-masing di YouTube. Projek pembelajaran, bukan untuk navigasi penerbangan sebenar.",logo:"Halaman utama",hi:n=>`Hai, ${n}`,welcome:"Selamat datang",sub:"Ringkasan langit Malaysia sekarang.",
   live:"Di langit sekarang",sample:"Data contoh",planes:"pesawat",byAir:"Mengikut syarikat",other:"Lain-lain",highest:"Paling tinggi",fastest:"Paling laju",kmh:"km/j",tap:"Ketik untuk lihat di peta.",nodata:"Tiada data penerbangan buat masa ini.",
   wx:"Cuaca KUL",load:"Memuatkan...",temp:"Suhu",wind:"Angin",vis:"Penglihatan",calm:"Tenang",vrb:"Berubah-ubah",obs:"Dilaporkan",ago:"lalu",min:"min",hr:"jam",wxNone:"Tiada laporan METAR terkini.",wxErr:"Cuaca tidak tersedia buat masa ini.",onmap:"Lihat di peta",src:"Sumber: AviationWeather.gov (NOAA)",
   VFR:"VFR · baik untuk terbang",MVFR:"MVFR · sederhana",IFR:"IFR · penglihatan rendah",LIFR:"LIFR · sangat rendah",
   prog:"Kemajuan awak",rank:"Pangkat",noRank:"Main kuiz untuk dapat pangkat.",apKnown:"Lapangan terbang dikenali",units:"Unit Belajar selesai",last:"Kuiz terakhir",best:"Skor terbaik",noQuiz:"Belum ada kuiz.",correct:"betul",pts:"mata",top3:"3 teratas",
   r4:"Kapten",r3:"Pegawai Pertama",r2:"Juruterbang Pelatih",r1:"Penumpang Setia",
   qa:"Tindakan pantas",cont:n=>`Sambung: Unit ${n}`,contAll:"Semak kad lapangan terbang",qz:"Mula kuiz",qzSub:"Pilih mod dan tahap",busy:"Kuiz lapangan tersibuk",busySub:(a,n)=>`${a}: ${n} pesawat berhampiran`},
-en:{about:"About this project",madeBy:"Built by",ghBtn:"GitHub",liBtn:"LinkedIn",star:"Star it on GitHub",credits:"Credits",creditsTxt:"Flight, weather, route, status and map data come from the public sources below. Videos belong to their YouTube channel owners. A learning project, not for real flight navigation.",logo:"Home",hi:n=>`Hi, ${n}`,welcome:"Welcome",sub:"Malaysia's sky right now.",
+en:{about:"About this project",madeBy:"Built by",guest:"Cadet",nameLbl:"Change name",namePh:"Your name",save:"Save",cancel:"Cancel",ghBtn:"GitHub",liBtn:"LinkedIn",star:"Star it on GitHub",credits:"Credits",creditsTxt:"Flight, weather, route, status and map data come from the public sources below. Videos belong to their YouTube channel owners. A learning project, not for real flight navigation.",logo:"Home",hi:n=>`Hi, ${n}`,welcome:"Welcome",sub:"Malaysia's sky right now.",
   live:"In the sky now",sample:"Sample data",planes:"aircraft",byAir:"By airline",other:"Other",highest:"Highest",fastest:"Fastest",kmh:"km/h",tap:"Tap to see it on the map.",nodata:"No flight data right now.",
   wx:"KUL weather",load:"Loading...",temp:"Temperature",wind:"Wind",vis:"Visibility",calm:"Calm",vrb:"Variable",obs:"Reported",ago:"ago",min:"min",hr:"h",wxNone:"No recent METAR report.",wxErr:"Weather is unavailable right now.",onmap:"View on map",src:"Source: AviationWeather.gov (NOAA)",
   VFR:"VFR · good flying weather",MVFR:"MVFR · marginal",IFR:"IFR · low visibility",LIFR:"LIFR · very low",
@@ -40,6 +40,11 @@ st.textContent=`
 .hm{max-width:900px;margin:0 auto;padding:16px;display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
 @media (min-width:760px){.hm{grid-template-columns:repeat(2,minmax(0,1fr))}.hm .full{grid-column:1/-1}}
 .hm-top h1{font-size:1.5rem;line-height:1.2}.hm-top p{color:var(--muted);margin-top:4px}
+.hm-edit{padding:4px 8px;margin-left:6px;font-size:.95rem;vertical-align:middle;background:none;border:1px solid transparent;opacity:.7}
+.hm-edit:hover,.hm-edit:focus-visible{opacity:1;border-color:var(--line);background:#14264d}
+.hm-nf{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.hm-nf input{flex:1 1 180px;max-width:280px;margin:0;font-size:1.1rem}
+.hm-nf button{padding:9px 14px}.hm-nf .ok{background:linear-gradient(90deg,#0a8fb0,#2457d6);font-weight:700}
 .hm .card{padding:16px}
 .hm-h{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 12px;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .hm-tag{font-size:.72rem;letter-spacing:0;text-transform:none;padding:2px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
@@ -239,9 +244,15 @@ function aboutCard(){
   <details class="hm-cr"${crOpen?" open":""}><summary>${h("credits")}</summary><p>${h("creditsTxt")}</p><ul>${CREDITS.map(c=>`<li>${ext(c[1],"",esc(c[0]))}</li>`).join("")}</ul></details></div>`;
 }
 const L1=x=>Array.isArray(x)?x[lang=="ms"?0:1]:x;
+let editing=false;
+function topBlock(nm){
+  if(editing)return `<form class="hm-nf" id="hnf"><input id="hni" maxlength="20" autocomplete="nickname" placeholder="${esc(h("namePh"))}" aria-label="${esc(h("namePh"))}" value="${esc(nm)}"><button type="submit" class="ok">${h("save")}</button><button type="button" data-a="ncancel">${h("cancel")}</button></form>`;
+  return `<h1>${esc(h("hi")(nm||h("guest")))} 👋<button class="hm-edit" data-a="name" title="${esc(h("nameLbl"))}" aria-label="${esc(h("nameLbl"))}">✏️</button></h1>`;
+}
 function render(){
+  if(editing)return;                       // do not wipe what the user is typing
   const nm=ls.get("kl-name","");
-  box.innerHTML=`<div class="full hm-top"><h1>${esc(nm?h("hi")(nm):h("welcome"))} 👋</h1><p>${h("sub")}</p></div>
+  box.innerHTML=`<div class="full hm-top">${topBlock(nm)}<p>${h("sub")}</p></div>
   ${actCard()}${liveCard()}${wxCard()}${progCard()}${aboutCard()}`;
 }
 
@@ -279,7 +290,20 @@ box.addEventListener("click",e=>{
   else if(a=="busy"){const z=busiest();if(z)quizAirport(z.a)}
   else if(a=="cont"){const n=nextUnit();if(n)openLearn("unit",n.u.id)}
   else if(a=="cards")openLearn("cards");
+  else if(a=="name"){
+    editing=true;box.querySelector(".hm-top").innerHTML=topBlock(ls.get("kl-name",""))+`<p>${h("sub")}</p>`;
+    const i=$("#hni");if(i){i.focus();i.select()}
+  }
+  else if(a=="ncancel"){editing=false;render()}
 });
+box.addEventListener("submit",e=>{
+  if(e.target.id!="hnf")return;
+  e.preventDefault();
+  const v=$("#hni").value.replace(/[<>]/g,"").trim().slice(0,20);
+  ls.set("kl-name",v);                      // empty = back to the generic greeting; the quiz result screen reuses this name
+  editing=false;render();
+});
+box.addEventListener("keydown",e=>{if(e.key=="Escape"&&editing){editing=false;render()}});
 
 // ---------- hooks into the existing app ----------
 const _go=go;
