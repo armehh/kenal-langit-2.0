@@ -305,16 +305,49 @@ app.get('/api/weather/:icao', async (req, res) => {
   }
 });
 
-// ---------- Leaderboard: JSON file storage ----------
+// ---------- Leaderboard: Firestore (persistent), with JSON-file fallback ----------
+// Credentials: FIREBASE_SERVICE_ACCOUNT (the whole service-account JSON as one env var, used on Render)
+// or a firebase-key.json file in this folder (local development, git-ignored).
+let fsdb = null;
+try {
+  let cred = null;
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    cred = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  } else {
+    const keyFile = path.join(__dirname, process.env.FIREBASE_KEY_FILE || 'firebase-key.json');
+    if (fs.existsSync(keyFile)) cred = JSON.parse(fs.readFileSync(keyFile, 'utf8'));
+  }
+  if (cred) {
+    const { initializeApp, cert } = require('firebase-admin/app');
+    const { getFirestore } = require('firebase-admin/firestore');
+    initializeApp({ credential: cert(cred) });
+    fsdb = getFirestore();
+  }
+} catch (e) {
+  console.warn('Firebase init failed, falling back to the JSON file:', e.message);
+}
+console.log('Leaderboard storage:', fsdb ? 'Firestore (persistent)' : 'JSON file (resets on free hosting)');
+
 const LEVELS = ['easy', 'med', 'hard'];
 const readBoard = () => { try { return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); } catch { return []; } };
 const lastPost = new Map();
+let topCache = { t: 0, data: null };            // saves Firestore reads: the top 10 is reused for 15 seconds
 
-app.get('/api/leaderboard', (req, res) => {
-  res.json(readBoard().sort((a, b) => b.score - a.score).slice(0, 10));
+app.get('/api/leaderboard', async (req, res) => {
+  try {
+    if (!fsdb) return res.json(readBoard().sort((a, b) => b.score - a.score).slice(0, 10));
+    if (topCache.data && Date.now() - topCache.t < 15000) return res.json(topCache.data);
+    const snap = await fsdb.collection('leaderboard').orderBy('score', 'desc').limit(10).get();
+    const data = snap.docs.map(d => { const { name, score, level, mode, date } = d.data(); return { name, score, level, mode, date }; });
+    topCache = { t: Date.now(), data };
+    res.json(data);
+  } catch (e) {
+    console.warn('Leaderboard read error:', e.message);
+    res.status(502).json({ error: 'Leaderboard unavailable' });
+  }
 });
 
-app.post('/api/leaderboard', (req, res) => {
+app.post('/api/leaderboard', async (req, res) => {
   const ip = req.ip;
   if (Date.now() - (lastPost.get(ip) || 0) < 10000) return res.status(429).json({ error: 'Too fast' });
   const { name, score, level, mode } = req.body || {};
@@ -324,11 +357,22 @@ app.post('/api/leaderboard', (req, res) => {
     return res.status(400).json({ error: 'Invalid entry' });
   }
   lastPost.set(ip, Date.now());
-  const board = readBoard();
-  board.push({ name: clean, score, level, mode, date: new Date().toISOString() });
-  fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
-  fs.writeFileSync(DATA_FILE, JSON.stringify(board.sort((a, b) => b.score - a.score).slice(0, 100)));
-  res.status(201).json({ ok: true });
+  const entry = { name: clean, score, level, mode, date: new Date().toISOString() };
+  try {
+    if (fsdb) {
+      await fsdb.collection('leaderboard').add(entry);
+      topCache = { t: 0, data: null };
+    } else {
+      const board = readBoard();
+      board.push(entry);
+      fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
+      fs.writeFileSync(DATA_FILE, JSON.stringify(board.sort((a, b) => b.score - a.score).slice(0, 100)));
+    }
+    res.status(201).json({ ok: true });
+  } catch (e) {
+    console.warn('Leaderboard write error:', e.message);
+    res.status(502).json({ error: 'Leaderboard unavailable' });
+  }
 });
 
-app.listen(PORT, () => console.log(`KenalLangit running at http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`KenalLangit running at http://localhost:${PORT}`));
