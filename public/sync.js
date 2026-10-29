@@ -89,6 +89,7 @@ async function boot(){
     if(!u){try{await auth.signInAnonymously()}catch(e){}return}
     user=u;
     await reconcile();
+    mountUI();
     notify();try{applyLang()}catch(e){}                           // lets the Home card show the sign-in state
   });
 }
@@ -121,6 +122,74 @@ window.KLSync={
     await auth.signOut();
     location.reload();
   },
+};
+
+// ---------- Header account button + sign-in popover ----------
+const A={
+ms:{in:"Log masuk",acct:"Akaun",title:"Simpan kemajuan awak",body:"Log masuk dengan Google supaya kemajuan kuiz dan Belajar boleh dibuka di peranti lain. Tanpa log masuk, kemajuan hanya terikat pada pelayar ini.",go:"Teruskan dengan Google",later:"Nanti",as:e=>`Disegerakkan sebagai ${e}`,out:"Log keluar",outAsk:"Log keluar dan kosongkan kemajuan di peranti ini? Kemajuan kekal selamat dalam akaun awak.",err:"Tidak dapat log masuk. Cuba lagi."},
+en:{in:"Sign in",acct:"Account",title:"Save your progress",body:"Sign in with Google so your quiz and Learn progress works on other devices. Without signing in, progress stays tied to this browser.",go:"Continue with Google",later:"Not now",as:e=>`Synced as ${e}`,out:"Sign out",outAsk:"Sign out and clear progress on this device? It stays safe in your account.",err:"Could not sign in. Please try again."}
+};
+const a=k=>A[lang][k];
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const GLOGO='<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
+const css=document.createElement("style");
+css.textContent=`.kl-hr{display:flex;align-items:center;gap:8px}
+.kl-acct{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:#10285a;border:1px solid var(--cyan);color:var(--text);font-weight:700;font-size:.9rem}
+.kl-av{width:26px;height:26px;border-radius:50%;background:var(--cyan);color:#04101f;display:inline-flex;align-items:center;justify-content:center;font-weight:800}
+.kl-pop{position:fixed;top:64px;left:12px;right:12px;max-width:340px;margin-left:auto;z-index:3000;background:var(--navy2);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 14px 40px rgba(0,0,0,.6)}
+.kl-pop h3{margin:0 0 8px;color:var(--yellow)}.kl-pop p{color:var(--muted);font-size:.9rem;line-height:1.45}
+.kl-g{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:11px;border-radius:10px;background:#fff;color:#1f1f1f;font-weight:700;margin-top:14px}.kl-g:hover{background:#f1f1f1}.kl-g:disabled{opacity:.6}
+.kl-x{display:block;margin:10px auto 0;background:none;color:var(--muted);padding:6px 10px;font-size:.85rem}
+.kl-err{color:#ff8a93;font-size:.85rem;margin-top:10px}
+@media(max-width:380px){.kl-acct b{display:none}}`;
+document.head.appendChild(css);
+
+let btn=null,pop=null;
+const closePop=()=>{if(pop){pop.remove();pop=null}};
+function renderBtn(){
+  if(!btn)return;
+  const S=KLSync.state();
+  btn.innerHTML=S.google?`<span class="kl-av">${esc((S.email||"?")[0].toUpperCase())}</span>`:`<span aria-hidden="true">👤</span><b>${a("in")}</b>`;
+  btn.setAttribute("aria-label",S.google?S.email:a("in"));
+  btn.title=S.google?S.email:a("in");
+}
+function openPop(){
+  closePop();
+  const S=KLSync.state();
+  pop=document.createElement("div");
+  pop.className="kl-pop";pop.setAttribute("role","dialog");pop.setAttribute("aria-label",a("acct"));
+  pop.innerHTML=S.google
+    ?`<h3>${a("acct")}</h3><p>${esc(a("as")(S.email))}</p><button class="kl-g" id="klo" style="background:#14264d;color:var(--text)">${a("out")}</button>`
+    :`<h3>${a("title")}</h3><p>${a("body")}</p><button class="kl-g" id="klg">${GLOGO}<span>${a("go")}</span></button><p class="kl-err" id="kle" hidden>${a("err")}</p><button class="kl-x" id="klx">${a("later")}</button>`;
+  document.body.appendChild(pop);
+  const g=pop.querySelector("#klg"),o=pop.querySelector("#klo"),x=pop.querySelector("#klx");
+  if(g)g.onclick=()=>{g.disabled=true;KLSync.link().then(closePop).catch(()=>{g.disabled=false;const m=pop&&pop.querySelector("#kle");if(m)m.hidden=false})};
+  if(o)o.onclick=()=>{if(confirm(a("outAsk")))KLSync.signOut().catch(()=>{})};
+  if(x)x.onclick=closePop;
+}
+function mountUI(){
+  if(btn)return;
+  const lb=document.getElementById("lang");if(!lb)return;
+  const wrap=document.createElement("div");wrap.className="kl-hr";
+  lb.parentNode.insertBefore(wrap,lb);
+  btn=document.createElement("button");btn.className="kl-acct";btn.type="button";
+  btn.onclick=e=>{e.stopPropagation();pop?closePop():openPop()};
+  wrap.append(btn,lb);
+  renderBtn();
+}
+document.addEventListener("click",e=>{if(pop&&!pop.contains(e.target)&&e.target!==btn&&!btn.contains(e.target))closePop()});
+document.addEventListener("keydown",e=>{if(e.key=="Escape")closePop()});
+const _al=applyLang;
+applyLang=function(){_al();renderBtn();if(pop)openPop()};            // redraw the popover too when the language changes
+
+// One gentle nudge, once: right after the first finished quiz, offer to save progress.
+const _fin2=finish;
+finish=function(){
+  _fin2();
+  try{
+    const S=KLSync.state();
+    if(S.ready&&!S.google&&!ls.get("kl-nudge",0)){rawSet("kl-nudge",1);setTimeout(openPop,1500)}
+  }catch(e){}
 };
 
 boot();
