@@ -1,8 +1,8 @@
 // KenalLangit side panel: searchable flight + airport lists with detail cards. Load AFTER characters.js.
 (()=>{
 const P={
-ms:{fl:"Penerbangan",ap:"Lapangan Terbang",sq:"Cari kod panggilan, syarikat, negara...",sa:"Cari lapangan terbang...",all:"Semua",other:"Lain-lain",sort:"Isih",s_cs:"Kod panggilan",s_alt:"Ketinggian",s_spd:"Kelajuan",lp:"Pesawat",la:"Lapangan terbang",empty:"Tiada hasil dijumpai.",nodata:"Tiada data penerbangan buat masa ini.",back:"← Kembali",airline:"Syarikat",country:"Negara pendaftaran",icao:"ICAO24",alt:"Ketinggian",spd:"Kelajuan",kmh:"km/j",hdg:"Arah",vr:"Kadar naik/turun",pos:"Kedudukan",near:"Lapangan terbang terdekat",climb:"Naik",desc:"Turun",level:"Mendatar",lost:"Penerbangan ini tiada dalam paparan terkini.",sample:"Ini data contoh, bukan penerbangan sebenar.",route:"Laluan asal dan destinasi tidak disediakan oleh data OpenSky percuma.",open:"Buka panel",close:"Tutup panel",intl:"Antarabangsa",dom:"Domestik"},
-en:{fl:"Flights",ap:"Airports",sq:"Search callsign, airline, country...",sa:"Search airports...",all:"All",other:"Other",sort:"Sort",s_cs:"Callsign",s_alt:"Altitude",s_spd:"Speed",lp:"Aircraft",la:"Airports",empty:"No matches.",nodata:"No flight data right now.",back:"← Back",airline:"Airline",country:"Registered in",icao:"ICAO24",alt:"Altitude",spd:"Speed",kmh:"km/h",hdg:"Heading",vr:"Vertical rate",pos:"Position",near:"Nearest airport",climb:"Climbing",desc:"Descending",level:"Level",lost:"This flight is no longer in the latest data.",sample:"This is sample data, not a real flight.",route:"Origin and destination are not provided by the free OpenSky data.",open:"Open panel",close:"Close panel",intl:"International",dom:"Domestic"}
+ms:{fl:"Penerbangan",ap:"Lapangan Terbang",sq:"Cari kod panggilan, syarikat, negara...",sa:"Cari lapangan terbang...",all:"Semua",other:"Lain-lain",sort:"Isih",s_cs:"Kod panggilan",s_alt:"Ketinggian",s_spd:"Kelajuan",lp:"Pesawat",la:"Lapangan terbang",empty:"Tiada hasil dijumpai.",nodata:"Tiada data penerbangan buat masa ini.",back:"← Kembali",airline:"Syarikat",country:"Negara pendaftaran",icao:"ICAO24",alt:"Ketinggian",spd:"Kelajuan",kmh:"km/j",hdg:"Arah",vr:"Kadar naik/turun",pos:"Kedudukan",type:"Jenis pesawat",near:"Lapangan terbang terdekat",climb:"Naik",desc:"Turun",level:"Mendatar",lost:"Penerbangan ini tiada dalam paparan terkini.",sample:"Ini data contoh, bukan penerbangan sebenar.",route:"Laluan asal dan destinasi tidak disediakan oleh data OpenSky percuma.",open:"Buka panel",close:"Tutup panel",intl:"Antarabangsa",dom:"Domestik"},
+en:{fl:"Flights",ap:"Airports",sq:"Search callsign, airline, country...",sa:"Search airports...",all:"All",other:"Other",sort:"Sort",s_cs:"Callsign",s_alt:"Altitude",s_spd:"Speed",lp:"Aircraft",la:"Airports",empty:"No matches.",nodata:"No flight data right now.",back:"← Back",airline:"Airline",country:"Registered in",icao:"ICAO24",alt:"Altitude",spd:"Speed",kmh:"km/h",hdg:"Heading",vr:"Vertical rate",pos:"Position",type:"Aircraft type",near:"Nearest airport",climb:"Climbing",desc:"Descending",level:"Level",lost:"This flight is no longer in the latest data.",sample:"This is sample data, not a real flight.",route:"Origin and destination are not provided by the free OpenSky data.",open:"Open panel",close:"Close panel",intl:"International",dom:"Domestic"}
 };
 const p=k=>P[lang][k];
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -97,12 +97,12 @@ function visible(){
 function detail(f){
   const n=nearest(f);
   const vr=f.vr==null?"—":Math.abs(f.vr)<1?p("level"):`${f.vr>0?p("climb"):p("desc")} ${Math.abs(Math.round(f.vr*196.85))} ft/min`;
-  const rows=[[p("airline"),esc(airline(f)||"—")],[p("country"),esc(f.country||"—")],[p("icao"),esc(f.icao||"—")],
+  const rows=[[p("airline"),esc(airline(f)||"—")],[p("type"),esc(f.type||"—")],[p("country"),esc(f.country||"—")],[p("icao"),esc(f.icao||"—")],
    [p("alt"),f.alt!=null?`${Math.round(f.alt)} m · ${Math.round(f.alt*3.281)} ft`:"—"],
    [p("spd"),f.vel!=null?`${Math.round(f.vel*3.6)} ${p("kmh")} · ${Math.round(f.vel*1.944)} kt`:"—"],
    [p("hdg"),`${Math.round(f.hdg||0)}°`],[p("vr"),vr],[p("pos"),`${f.lat.toFixed(3)}, ${f.lng.toFixed(3)}`],
    [p("near"),`<button class="lnk" data-ap="${n[0].iata}">${n[0].iata} · ${esc(nameOf(n[0],lang))}</button> (${Math.round(n[1])} km)`]];
-  return `<div class="kp-detail"><button data-back>${p("back")}</button><h3 style="color:${col(f)}">✈ ${esc(f.cs||"—")}</h3><small>${esc(airline(f))}</small>
+  return `<div class="kp-detail" data-type="${esc(f.type||"")}"><button data-back>${p("back")}</button><h3 style="color:${col(f)}">✈ ${esc(f.cs||"—")}</h3><small>${esc(airline(f))}</small>
   <dl>${rows.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join("")}</dl>
   <p class="note">${flightSrc=="sample"?p("sample")+" ":""}${p("route")}</p></div>`;
 }

@@ -58,6 +58,12 @@ KenalLangit is a Malaysia-focused flight tracker and aviation learning app. It c
 - **Cards:** airport flashcards grouped by Peninsular Malaysia, Sabah and Sarawak, with a cultural fact on the back. Mark cards as known or review again.
 - Progress is saved in your browser.
 
+### Trips (Jejak)
+- **Airports visited:** mark any of the 18 airports as "Pernah sampai" from its map popup or from the Trips tab. The map marker turns green.
+- **Flight log:** add a flight with airline, aircraft type (A320, B738, A350 and so on), route and an optional date. Malaysian airports on the route are marked as visited automatically. Overseas legs are logged as "Overseas"; their distance is not counted.
+- **Derived stats and badges:** total flights, airlines, aircraft types and distance flown (great-circle, from airport coordinates), plus 12 badges such as *All Sabah*, *Sarawak Explorer* and *Plane Collector*. Nothing derived is stored.
+- Stored in `kl-visited` and `kl-flights` and synced with the rest of your progress. The data is self-reported and unverified, so it is kept off the leaderboard.
+
 ### Videos
 - A curated list in three categories: *Cabin crew life* (Borak Dalam Galley), *Malaysia* and *Learn aviation*.
 - Watch inside the page (privacy-friendly `youtube-nocookie.com` player) or open on YouTube. Previous and next buttons move through the current category.
@@ -98,6 +104,7 @@ kenal-langit-2.0/
 │   ├── route.js            # Origin and destination on the flight card
 │   ├── status.js           # Delay and status on the flight card
 │   ├── tour.js             # 15-step guided tour
+│   ├── trip.js             # Trips tab: airports visited, flight log, stats and badges
 │   ├── videos.js           # Video tab and the editable VIDEOS list
 │   └── img/
 │       └── characters/     # Character poses (.webp)

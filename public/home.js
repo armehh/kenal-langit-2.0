@@ -13,14 +13,14 @@ ms:{about:"Tentang projek",madeBy:"Dibina oleh",guest:"Kadet",nameLbl:"Tukar nam
   live:"Di langit sekarang",sample:"Data contoh",planes:"pesawat",byAir:"Mengikut syarikat",other:"Lain-lain",highest:"Paling tinggi",fastest:"Paling laju",kmh:"km/j",tap:"Ketik untuk lihat di peta.",nodata:"Tiada data penerbangan buat masa ini.",
   wx:"Cuaca KUL",load:"Memuatkan...",temp:"Suhu",wind:"Angin",vis:"Penglihatan",calm:"Tenang",vrb:"Berubah-ubah",obs:"Dilaporkan",ago:"lalu",min:"min",hr:"jam",wxNone:"Tiada laporan METAR terkini.",wxErr:"Cuaca tidak tersedia buat masa ini.",onmap:"Lihat di peta",src:"Sumber: AviationWeather.gov (NOAA)",
   VFR:"VFR · baik untuk terbang",MVFR:"MVFR · sederhana",IFR:"IFR · penglihatan rendah",LIFR:"LIFR · sangat rendah",
-  prog:"Kemajuan awak",syncAnon:"Kemajuan disimpan dalam awan, tetapi terikat pada pelayar ini. Sambung dengan Google untuk guna di peranti lain.",syncGoogle:e=>`Disegerakkan sebagai ${e}`,gConn:"Sambung dengan Google",gOut:"Log keluar",gOutAsk:"Log keluar dan kosongkan kemajuan di peranti ini? Kemajuan kekal selamat dalam akaun awak.",gErr:"Tidak dapat menyambung. Cuba lagi.",rank:"Pangkat",noRank:"Main kuiz untuk dapat pangkat.",apKnown:"Lapangan terbang dikenali",units:"Unit Belajar selesai",last:"Kuiz terakhir",best:"Skor terbaik",noQuiz:"Belum ada kuiz.",correct:"betul",pts:"mata",top3:"3 teratas",
+  prog:"Kemajuan awak",tripAp:"Lapangan terbang dijejak",tripBd:"Lencana Jejak",total:"Jumlah mata",nextR:n=>`Seterusnya: ${n}`,topR:"Pangkat tertinggi dicapai.",det:"Lihat butiran mata",tripFl:"Penerbangan dicatat",tripKm:"Jarak terbang",tripIn:"Log masuk Google untuk jejak penerbangan",syncAnon:"Kemajuan disimpan dalam awan, tetapi terikat pada pelayar ini. Sambung dengan Google untuk guna di peranti lain.",syncGoogle:e=>`Disegerakkan sebagai ${e}`,gConn:"Sambung dengan Google",gOut:"Log keluar",gOutAsk:"Log keluar dan kosongkan kemajuan di peranti ini? Kemajuan kekal selamat dalam akaun awak.",gErr:"Tidak dapat menyambung. Cuba lagi.",rank:"Pangkat",noRank:"Main kuiz untuk dapat pangkat.",apKnown:"Lapangan terbang dikenali",units:"Unit Belajar selesai",last:"Kuiz terakhir",best:"Skor terbaik",noQuiz:"Belum ada kuiz.",correct:"betul",pts:"mata",top3:"3 teratas",
   r4:"Kapten",r3:"Pegawai Pertama",r2:"Juruterbang Pelatih",r1:"Penumpang Setia",
   qa:"Tindakan pantas",cont:n=>`Sambung: Unit ${n}`,contAll:"Semak kad lapangan terbang",qz:"Mula kuiz",qzSub:"Pilih mod dan tahap",busy:"Kuiz lapangan tersibuk",busySub:(a,n)=>`${a}: ${n} pesawat berhampiran`},
 en:{about:"About this project",madeBy:"Built by",guest:"Cadet",nameLbl:"Change name",namePh:"Your name",save:"Save",cancel:"Cancel",ghBtn:"GitHub",liBtn:"LinkedIn",star:"Star it on GitHub",credits:"Credits",creditsTxt:"Flight, weather, route, status and map data come from the public sources below. Videos belong to their YouTube channel owners. A learning project, not for real flight navigation.",logo:"Home",hi:n=>`Hi, ${n}`,welcome:"Welcome",sub:"Malaysia's sky right now.",
   live:"In the sky now",sample:"Sample data",planes:"aircraft",byAir:"By airline",other:"Other",highest:"Highest",fastest:"Fastest",kmh:"km/h",tap:"Tap to see it on the map.",nodata:"No flight data right now.",
   wx:"KUL weather",load:"Loading...",temp:"Temperature",wind:"Wind",vis:"Visibility",calm:"Calm",vrb:"Variable",obs:"Reported",ago:"ago",min:"min",hr:"h",wxNone:"No recent METAR report.",wxErr:"Weather is unavailable right now.",onmap:"View on map",src:"Source: AviationWeather.gov (NOAA)",
   VFR:"VFR · good flying weather",MVFR:"MVFR · marginal",IFR:"IFR · low visibility",LIFR:"LIFR · very low",
-  prog:"Your progress",syncAnon:"Your progress is saved in the cloud, but tied to this browser. Connect Google to use it on another device.",syncGoogle:e=>`Synced as ${e}`,gConn:"Connect with Google",gOut:"Sign out",gOutAsk:"Sign out and clear progress on this device? It stays safe in your account.",gErr:"Could not connect. Please try again.",rank:"Rank",noRank:"Play a quiz to earn a rank.",apKnown:"Airports known",units:"Learn units done",last:"Last quiz",best:"Best score",noQuiz:"No quiz yet.",correct:"correct",pts:"pts",top3:"Top 3",
+  prog:"Your progress",tripAp:"Airports visited",tripBd:"Trip badges",total:"Total points",nextR:n=>`Next: ${n}`,topR:"Highest rank reached.",det:"Show points breakdown",tripFl:"Flights logged",tripKm:"Distance flown",tripIn:"Sign in with Google to track your flights",syncAnon:"Your progress is saved in the cloud, but tied to this browser. Connect Google to use it on another device.",syncGoogle:e=>`Synced as ${e}`,gConn:"Connect with Google",gOut:"Sign out",gOutAsk:"Sign out and clear progress on this device? It stays safe in your account.",gErr:"Could not connect. Please try again.",rank:"Rank",noRank:"Play a quiz to earn a rank.",apKnown:"Airports known",units:"Learn units done",last:"Last quiz",best:"Best score",noQuiz:"No quiz yet.",correct:"correct",pts:"pts",top3:"Top 3",
   r4:"Captain",r3:"First Officer",r2:"Trainee Pilot",r1:"Loyal Passenger",
   qa:"Quick actions",cont:n=>`Continue: Unit ${n}`,contAll:"Review airport cards",qz:"Start a quiz",qzSub:"Pick a mode and level",busy:"Quiz the busiest airport",busySub:(a,n)=>`${a}: ${n} aircraft nearby`}
 };
@@ -69,6 +69,7 @@ st.textContent=`
 .hm-IFR{background:rgba(255,71,87,.18);color:var(--red)}.hm-LIFR{background:rgba(214,100,255,.2);color:#e089ff}
 .hm-link{background:none;padding:0;color:var(--cyan);text-decoration:underline;font-size:.85rem}
 .hm-rank{display:flex;align-items:center;gap:12px;margin-bottom:12px}.hm-rank .ic{font-size:2rem}.hm-rank b{font-size:1.2rem;color:var(--yellow)}
+.hm-dt{margin-top:12px}.hm-dt summary{cursor:pointer;color:var(--cyan);font-size:.9rem}
 .hm-stat{margin:10px 0 0}.hm-stat .t{display:flex;justify-content:space-between;font-size:.88rem;margin-bottom:5px}.hm-stat .bar{margin-bottom:0}
 .hm-kv{display:flex;justify-content:space-between;gap:8px;font-size:.88rem;padding:8px 0;border-top:1px solid var(--line)}.hm-kv span:first-child{color:var(--muted)}
 .hm-top3{margin-top:10px;padding:0;list-style:none}.hm-top3 li{display:flex;justify-content:space-between;gap:8px;padding:7px 0;font-size:.88rem}
@@ -213,21 +214,24 @@ function syncRow(){
     ?`<div class="hm-sync"><p class="hm-note">${esc(h("syncGoogle")(S.email))}</p><button class="hm-link" data-a="gout">${h("gOut")}</button></div>`
     :`<div class="hm-sync"><p class="hm-note">${h("syncAnon")}</p><button class="hm-lk pri" data-a="gconn"><span>${h("gConn")}</span></button><p class="hm-note" id="hsErr" hidden>${h("gErr")}</p></div>`;
 }
-function progCard(){
+function progCard(){                              // total points decide the rank; every source is capped so it cannot be farmed
   const kn=ls.get("kl-known",{}),nk=AIRPORTS.filter(a=>kn[a.iata]===1).length,nt=AIRPORTS.length;
   const p=course(),nu=KL_UNITS.filter(u=>(p[u.id]||0)>=2).length,tu=KL_UNITS.length;
   const last=ls.get("kl-last",null),best=ls.get("kl-best",0);
-  let rank=`<div class="hm-rank"><span class="ic">🧳</span><div><div class="hm-m" style="font-size:.8rem">${h("rank")}</div><span class="hm-m">${h("noRank")}</span></div></div>`;
-  if(last&&last.n){
-    const pc=last.ok/last.n,k=pc>=.9?4:pc>=.7?3:pc>=.4?2:1;
-    rank=`<div class="hm-rank"><span class="ic">${RANK_ICON[k]}</span><div><div class="hm-m" style="font-size:.8rem">${h("rank")}</div><b>${h("r"+k)}</b></div></div>`;
-  }
-  const bar=(t,a,b)=>`<div class="hm-stat"><div class="t"><span>${t}</span><b>${a}/${b}</b></div><div class="bar"><i style="width:${a/b*100}%"></i></div></div>`;
+  const T=window.KLTrip&&KLTrip.summary(),S0=window.KLSync&&KLSync.state();     // Trips is for Google accounts only
+  const FL=T?Math.min(T.fl,20):0;                                                // self-reported flights count for 20 at most
+  const pts=[nk*10,nu*30,T?T.ap*10:0,FL*5,T?T.bd*20:0],total=pts.reduce((a,b)=>a+b,0);
+  const TH=[0,100,250,450],k=TH.filter(x=>total>=x).length,nxt=TH[k];
+  const bar=(t,a,b,q)=>`<div class="hm-stat"><div class="t"><span>${t}</span><b>${a}/${b}${q==null?"":` · ${q} ${h("pts")}`}</b></div><div class="bar"><i style="width:${Math.min(100,a/b*100)}%"></i></div></div>`;
+  const rank=`<div class="hm-rank"><span class="ic">${RANK_ICON[k]}</span><div><div class="hm-m" style="font-size:.8rem">${h("rank")}</div><b>${h("r"+k)}</b></div><div style="margin-left:auto;text-align:right"><div class="hm-big" style="font-size:1.7rem">${total}</div><div class="hm-m" style="font-size:.8rem">${h("total")}</div></div></div>`;
+  const next=nxt?bar(h("nextR")(h("r"+(k+1))),total,nxt):`<p class="hm-note">${h("topR")}</p>`;
+  const trip=T?bar(h("tripAp"),T.ap,T.total,pts[2])+bar(`${h("tripFl")} (${T.fl})`,FL,20,pts[3])+bar(h("tripBd"),T.bd,T.bdTotal,pts[4])+(T.km?`<div class="hm-kv"><span>${h("tripKm")}</span><b>${T.km.toLocaleString("en")} km</b></div>`:"")
+    :S0&&S0.configured&&S0.ready?`<button class="hm-link" data-a="trip" style="margin-top:10px">${h("tripIn")} →</button>`:"";
   const nm=ls.get("kl-name","");
-  return `<div class="card hm-pg"><h2 class="hm-h"><span>🏆 ${h("prog")}</span></h2>${rank}
-  ${bar(h("apKnown"),nk,nt)}${bar(h("units"),nu,tu)}
+  return `<div class="card hm-pg"><h2 class="hm-h"><span>🏆 ${h("prog")}</span></h2>${rank}${next}
+  <details class="hm-dt"${dtOpen?" open":""}><summary>${h("det")}</summary>${bar(h("apKnown"),nk,nt,pts[0])}${bar(h("units"),nu,tu,pts[1])}${trip}
   <div class="hm-kv" style="margin-top:14px"><span>${h("last")}</span><b>${last&&last.n?`${last.s} ${h("pts")} · ${last.ok}/${last.n} ${h("correct")}`:h("noQuiz")}</b></div>
-  ${best?`<div class="hm-kv"><span>${h("best")}</span><b>${best} ${h("pts")}</b></div>`:""}
+  ${best?`<div class="hm-kv"><span>${h("best")}</span><b>${best} ${h("pts")}</b></div>`:""}</details>
   ${board&&board.length?`<div class="hm-sub" style="margin-top:14px">${h("top3")}</div><ul class="hm-top3">${board.map((e,i)=>`<li><span>${MEDAL[i]} ${esc(e.name)}${nm&&e.name==nm?" ⭐":""}</span><b>${esc(e.score)}</b></li>`).join("")}</ul>`:""}
   ${syncRow()}</div>`;
 }
@@ -242,7 +246,8 @@ function actCard(){
 const GH=`<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>`;
 const LI=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z"/></svg>`;
 const ext=(u,cls,inner)=>`<a class="${cls}" href="${esc(u)}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
-let crOpen=false;
+let crOpen=false,dtOpen=false;
+box.addEventListener("toggle",e=>{if(e.target.classList&&e.target.classList.contains("hm-dt"))dtOpen=e.target.open},true);
 box.addEventListener("toggle",e=>{if(e.target.classList&&e.target.classList.contains("hm-cr"))crOpen=e.target.open},true);
 function aboutCard(){
   const links=[ME.github&&ext(ME.github,"hm-lk",`${GH}<span>${h("ghBtn")} · ${esc(ME.githubLabel)}</span>`),
@@ -299,6 +304,7 @@ box.addEventListener("click",e=>{
   else if(a=="busy"){const z=busiest();if(z)quizAirport(z.a)}
   else if(a=="cont"){const n=nextUnit();if(n)openLearn("unit",n.u.id)}
   else if(a=="cards")openLearn("cards");
+  else if(a=="trip")go("trip");
   else if(a=="gconn"){b.disabled=true;KLSync.link().catch(()=>{b.disabled=false;const m=$("#hsErr");if(m)m.hidden=false})}
   else if(a=="gout"){if(confirm(h("gOutAsk")))KLSync.signOut().catch(()=>{})}
   else if(a=="name"){

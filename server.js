@@ -90,6 +90,7 @@ async function fetchReadsb(src) {
       vel: typeof a.gs === 'number' ? a.gs * 0.514444 : null,
       hdg: a.track || 0,
       vr: typeof a.baro_rate === 'number' ? a.baro_rate * 0.00508 : null,
+      type: typeof a.t === 'string' && /^[A-Z0-9]{2,4}$/.test(a.t) ? a.t : null,    // ICAO aircraft type, e.g. A320 (used by the "Pernah naik" button)
     });
   }
   return flights;
@@ -400,7 +401,9 @@ async function requireUser(req, res, next) {
   const m = /^Bearer (.+)$/.exec(req.headers.authorization || '');
   if (!m) return res.status(401).json({ error: 'no_token' });
   try {
-    req.uid = (await fbAuth.verifyIdToken(m[1])).uid;
+    const dec = await fbAuth.verifyIdToken(m[1]);
+    req.uid = dec.uid;
+    req.google = !!(dec.firebase && dec.firebase.identities && dec.firebase.identities['google.com']);   // anonymous accounts cannot store trip data
     next();
   } catch (e) {
     res.status(401).json({ error: 'bad_token' });
@@ -426,7 +429,29 @@ function cleanProgress(b) {
   const best = b.best == null ? 0 : b.best;
   if (!isInt(best, 0, 300)) return null;
   const name = typeof b.name === 'string' ? b.name.replace(/[<>]/g, '').trim().slice(0, 20) : '';
-  return { known, course, last, best, name };
+  const out = { known, course, last, best, name };
+  // Trip tracker. Left undefined when the client did not send them (an older cached copy of the app), so the PUT handler keeps what is stored.
+  if (b.visited !== undefined) {
+    const v = b.visited && typeof b.visited === 'object' && !Array.isArray(b.visited) ? Object.entries(b.visited) : null;
+    if (!v || v.length > 60) return null;
+    out.visited = {};
+    for (const [key, val] of v) { if (/^[A-Z]{3}$/.test(key) && val === 1) out.visited[key] = 1; }
+  }
+  if (b.flights !== undefined) {
+    if (!Array.isArray(b.flights) || b.flights.length > 300) return null;
+    const ids = new Set();
+    out.flights = [];
+    for (const f of b.flights) {
+      if (!f || typeof f !== 'object' || typeof f.id !== 'string' || typeof f.al !== 'string' || typeof f.ac !== 'string') continue;       // ac may be '' (aircraft type unknown)
+      const al = f.al.replace(/[<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 30);
+      const d = f.d == null ? null : f.d;
+      const dateOk = d === null || (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d) && !isNaN(Date.parse(d + 'T00:00:00Z')));
+      if (!/^[a-z0-9]{6,20}$/.test(f.id) || ids.has(f.id) || !al || !(f.ac === '' || /^[A-Z0-9]{2,8}$/.test(f.ac)) || !/^[A-Z]{3}$/.test(f.f) || !/^[A-Z]{3}$/.test(f.t) || f.f === f.t || !dateOk) continue;
+      ids.add(f.id);
+      out.flights.push({ id: f.id, al, ac: f.ac, f: f.f, t: f.t, d });
+    }
+  }
+  return out;
 }
 
 const progHits = new Map();               // uid or ip -> { t, n }: protects the Firestore free quota
@@ -442,8 +467,8 @@ app.get('/api/progress', requireUser, async (req, res) => {
   try {
     const snap = await fsdb.collection('users').doc(req.uid).get();
     if (!snap.exists) return res.json({ progress: null });
-    const { known, course, last, best, name } = snap.data();
-    res.json({ progress: { known: known || {}, course: course || {}, last: last || null, best: best || 0, name: name || '' } });
+    const { known, course, last, best, name, visited, flights } = snap.data();
+    res.json({ progress: { known: known || {}, course: course || {}, last: last || null, best: best || 0, name: name || '', visited: visited || {}, flights: flights || [] } });
   } catch (e) {
     console.warn('Progress read error:', e.message);
     res.status(502).json({ error: 'progress_unavailable' });
@@ -456,7 +481,14 @@ app.put('/api/progress', requireUser, async (req, res) => {
   if (!p) return res.status(400).json({ error: 'Invalid progress' });
   try {
     const { FieldValue } = require('firebase-admin/firestore');
-    await fsdb.collection('users').doc(req.uid).set({ ...p, updatedAt: FieldValue.serverTimestamp() });
+    const ref = fsdb.collection('users').doc(req.uid);
+    if (!req.google || p.visited === undefined || p.flights === undefined) {      // anonymous account or old client: keep the trip data already stored
+      const old = await ref.get();
+      const d = old.exists ? old.data() : {};
+      if (!req.google || p.visited === undefined) p.visited = d.visited || {};
+      if (!req.google || p.flights === undefined) p.flights = d.flights || [];
+    }
+    await ref.set({ ...p, updatedAt: FieldValue.serverTimestamp() });
     res.json({ ok: true });
   } catch (e) {
     console.warn('Progress write error:', e.message);
@@ -464,4 +496,4 @@ app.put('/api/progress', requireUser, async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`KenalLangit running at http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`KenalLangit running at http://localhost:${PORT}`));
