@@ -1,5 +1,5 @@
-// KenalLangit status.js: delay and status on the flight detail card (data via /api/status, from AirLabs).
-// Load AFTER route.js and BEFORE tour.js.
+
+
 (()=>{
 const R={
   ms:{title:"Status penerbangan",load:"Memuatkan status...",none:"Status tidak tersedia untuk penerbangan ini.",err:"Status tidak tersedia buat masa ini.",
@@ -13,10 +13,10 @@ const R={
 };
 const r=k=>R[lang][k];
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const cache=new Map();      // callsign -> { v: status object | null | "err" | "nokey" | "busy" | "cap", t }
+const cache=new Map();
 const pending=new Set();
-const fresh=c=>c&&Date.now()-c.t<(typeof c.v==="string"?60000:300000);   // error states retry after 1 min
-const hm=t=>t?String(t).slice(11,16):"--:--";   // "2026-10-22 09:10" -> "09:10" (local time at that airport)
+const fresh=c=>c&&Date.now()-c.t<(typeof c.v==="string"?60000:300000);
+const hm=t=>t?String(t).slice(11,16):"--:--";
 
 const st=document.createElement("style");
 st.textContent=`
@@ -60,7 +60,7 @@ function eta(m){
 function view(cs){
   const c=cache.get(cs);
   if(!fresh(c))return `<p>${r("load")}</p>`;
-  if(typeof c.v==="string")return `<p>${r(c.v)}</p>`;   // "err" | "nokey" | "busy" | "cap"
+  if(typeof c.v==="string")return `<p>${r(c.v)}</p>`;
   if(c.v===null)return `<p>${r("none")}</p>`;
   const s=c.v;
   const bar=s.status=="en-route"&&s.progress!=null
@@ -87,10 +87,10 @@ async function fetchStatus(cs){
   paint(cs);
 }
 function inject(){
-  if(flightSrc=="sample")return;                       // sample aircraft have no real status
+  if(flightSrc=="sample")return;
   const card=document.querySelector(".kp-detail");
   if(!card||card.querySelector(".fst"))return;
-  const rt=card.querySelector(".rt"),h=card.querySelector("h3");   // route.js adds .rt first
+  const rt=card.querySelector(".rt"),h=card.querySelector("h3");
   if(!rt||!h)return;
   const cs=h.textContent.replace("✈","").trim().toUpperCase();
   if(!/^[A-Z0-9]{2,8}$/.test(cs))return;

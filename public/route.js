@@ -1,5 +1,5 @@
-// KenalLangit route.js: shows origin -> destination on the flight detail card (data via /api/route, from adsbdb).
-// Load AFTER panel.js and BEFORE tour.js.
+
+
 (()=>{
 const R={
   ms:{title:"Laluan",load:"Mencari laluan...",none:"Laluan tidak diketahui untuk penerbangan ini.",err:"Tidak dapat memuatkan laluan. Cuba sebentar lagi.",sample:"Data contoh tiada laluan.",note:"Laluan berjadual daripada adsbdb. Ia mungkin tidak sama dengan laluan sebenar."},
@@ -7,7 +7,7 @@ const R={
 };
 const r=k=>R[lang][k];
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const cache=new Map();      // callsign -> { v: route | null | "err", t }
+const cache=new Map();
 const pending=new Set();
 const fresh=c=>c&&Date.now()-c.t<(c.v==="err"?30000:600000);
 
@@ -61,7 +61,7 @@ function inject(){
   if(!/^[A-Z0-9]{2,8}$/.test(cs))return;
   dl.insertAdjacentHTML("beforebegin",`<div class="rt" data-cs="${cs}"><div class="rt-t">${r("title")}</div>${view(cs)}</div>`);
   const note=card.querySelector(".note");
-  if(note&&flightSrc!="sample")note.textContent=r("note");   // replaces the old "route not provided" line
+  if(note&&flightSrc!="sample")note.textContent=r("note");
   fetchRoute(cs);
 }
 const body=document.querySelector(".kp-body");

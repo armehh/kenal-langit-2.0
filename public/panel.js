@@ -1,4 +1,4 @@
-// KenalLangit side panel: searchable flight + airport lists with detail cards. Load AFTER characters.js.
+
 (()=>{
 const P={
 ms:{fl:"Penerbangan",ap:"Lapangan Terbang",sq:"Cari kod panggilan, syarikat, negara...",sa:"Cari lapangan terbang...",all:"Semua",other:"Lain-lain",sort:"Isih",s_cs:"Kod panggilan",s_alt:"Ketinggian",s_spd:"Kelajuan",lp:"Pesawat",la:"Lapangan terbang",empty:"Tiada hasil dijumpai.",nodata:"Tiada data penerbangan buat masa ini.",back:"← Kembali",airline:"Syarikat",country:"Negara pendaftaran",icao:"ICAO24",alt:"Ketinggian",spd:"Kelajuan",kmh:"km/j",hdg:"Arah",vr:"Kadar naik/turun",pos:"Kedudukan",type:"Jenis pesawat",near:"Lapangan terbang terdekat",climb:"Naik",desc:"Turun",level:"Mendatar",lost:"Penerbangan ini tiada dalam paparan terkini.",sample:"Ini data contoh, bukan penerbangan sebenar.",route:"Laluan asal dan destinasi tidak disediakan oleh data OpenSky percuma.",open:"Buka panel",close:"Tutup panel",intl:"Antarabangsa",dom:"Domestik"},
@@ -17,7 +17,6 @@ const nearest=f=>AIRPORTS.map(a=>[a,km(f.lat,f.lng,a.lat,a.lng)]).sort((x,y)=>x[
 const S={tab:"f",q:"",air:"all",sort:"cs",sel:null};
 let flights=[],timer;
 
-// ---------- styles ----------
 const st=document.createElement("style");
 st.textContent=`
 .kp{position:absolute;z-index:1000;top:0;left:0;bottom:0;width:340px;max-width:100%;display:flex;flex-direction:column;background:rgba(13,23,48,.95);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-right:1px solid var(--line);transition:transform .25s ease;color:var(--text)}
@@ -55,7 +54,6 @@ st.textContent=`
 }`;
 document.head.appendChild(st);
 
-// ---------- skeleton ----------
 const kp=document.createElement("aside");kp.className="kp";kp.setAttribute("aria-label","Panel");
 kp.innerHTML=`<button class="kp-toggle" type="button"></button><div class="kp-head"></div><div class="kp-body"></div>`;
 $("#map").appendChild(kp);
@@ -87,7 +85,6 @@ head.addEventListener("change",e=>{
   if(e.target.dataset.l){const ly=e.target.dataset.l=="ac"?acLayer:apLayer;e.target.checked?map.addLayer(ly):map.removeLayer(ly)}
 });
 
-// ---------- rendering ----------
 function visible(){
   const q=S.q.trim().toLowerCase();
   const a=flights.filter(f=>(S.air=="all"||(S.air=="other"?!CH.includes(pre(f)):pre(f)==S.air))&&(!q||[f.cs,airline(f),f.country,f.icao].some(v=>String(v||"").toLowerCase().includes(q))));
@@ -124,7 +121,6 @@ function render(){
 }
 function hl(){flights.forEach(f=>{const el=f.marker&&f.marker.getElement&&f.marker.getElement();if(el)el.classList.toggle("sel",S.tab=="f"&&key(f)==S.sel)})}
 
-// ---------- actions ----------
 function selectFlight(k){
   const f=flights.find(x=>key(x)==k);if(!f)return;
   S.sel=k;render();hl();
@@ -144,13 +140,12 @@ body.addEventListener("click",e=>{
   else if(k)selectFlight(k.dataset.k);
 });
 
-// click on a plane marker: switch to the Flights tab, open the panel and show that flight's details
 function pickOnMap(k){
   if(S.tab!="f"){S.tab="f";S.q="";drawHead()}
   S.sel=k;setOpen(true);render();hl();
   revealPlane(k);
 }
-// the panel covers the left 340px (desktop) or the bottom 55% (phone): nudge the map so the plane stays in view
+
 function revealPlane(k){
   const f=flights.find(x=>key(x)==k);if(!f||!f.marker)return;
   const sz=map.getSize(),pt=map.latLngToContainerPoint(f.marker.getLatLng());
@@ -160,15 +155,15 @@ function revealPlane(k){
     map.panBy([pt.x-(340+(sz.x-340)/2),0],{animate:true,duration:.4});
   }
 }
-// ---------- hook into the existing flight loader ----------
+
 const _plane=plane;
 plane=function(f){
   _plane(f);
   const ls=acLayer.getLayers();
-  if(ls.length===1)flights=[];                       // first plane of a refresh: start a new list
+  if(ls.length===1)flights=[];
   const mk=ls[ls.length-1];
   flights.push(Object.assign({},f,{marker:mk}));
-  mk.on("click",()=>pickOnMap(key(f)));               // click a plane on the map -> open its details in the panel
+  mk.on("click",()=>pickOnMap(key(f)));
   clearTimeout(timer);timer=setTimeout(()=>{drawHead();render();hl()},0);
 };
 const _al=applyLang;

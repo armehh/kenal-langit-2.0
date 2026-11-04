@@ -1,5 +1,5 @@
-// KenalLangit weather.js: current airport weather (METAR) inside the airport popup.
-// Data via /api/weather/:icao (server proxies aviationweather.gov). Load AFTER extras.js and panel.js.
+
+
 (()=>{
 const W={
   ms:{title:"Cuaca terkini (METAR)",load:"Memuatkan cuaca...",none:"Tiada laporan METAR terkini untuk lapangan terbang ini.",err:"Cuaca tidak tersedia buat masa ini.",
@@ -15,7 +15,7 @@ const w=k=>W[lang][k];
 const L2=o=>o[lang=="ms"?0:1];
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const num=v=>{const n=parseFloat(v);return Number.isFinite(n)?n:null};
-const cache=new Map();      // icao -> { v: weather | null | "err", t }
+const cache=new Map();
 const pending=new Set();
 const fresh=c=>c&&Date.now()-c.t<(c.v==="err"?60000:300000);
 
@@ -48,14 +48,14 @@ function wind(m){
   const g=num(m.wgst)?` ${w("gust")} ${Math.round(num(m.wgst))}`:"";
   return `${d} · ${Math.round(s)}${g} kt (${Math.round(s*1.852)} ${w("kmh")})`;
 }
-function vis(m){                                   // aviationweather.gov gives statute miles, e.g. "6+"
+function vis(m){
   const sm=num(m.visib);if(sm==null)return "—";
   const km=sm*1.609;
   return `${String(m.visib).includes("+")?"≥ ":""}${km>=10?Math.round(km):km.toFixed(1)} km`;
 }
 function qnh(m){
   let a=num(m.altim);if(a==null)return "—";
-  if(a<100)a*=33.8639;                             // inHg -> hPa, in case the source sends inches
+  if(a<100)a*=33.8639;
   return `${Math.round(a)} hPa`;
 }
 function clouds(m){
@@ -100,7 +100,7 @@ function view(icao){
 }
 function paint(icao,popup){
   document.querySelectorAll(`.wx[data-icao="${icao}"]`).forEach(el=>{el.innerHTML=`<div class="wx-t">${w("title")}</div>${view(icao)}`});
-  if(popup&&popup.isOpen())popup.update();         // the popup grew, so re-measure it (safe: content is a DOM node, see popupopen below)
+  if(popup&&popup.isOpen())popup.update();
 }
 async function fetchWx(icao,popup){
   if(fresh(cache.get(icao)))return paint(icao,popup);
@@ -121,11 +121,10 @@ map.on("popupopen",e=>{
   const box=el.querySelector(".leaflet-popup-content");
   if(!box)return;
   const head=box.querySelector("b");if(!head)return;
-  const icao=(head.textContent.split("/")[1]||"").trim();      // popup starts with "KUL / WMKK"
+  const icao=(head.textContent.split("/")[1]||"").trim();
   if(!/^W[MB][A-Z]{2}$/.test(icao))return;
-  if(box.querySelector(".wx")){fetchWx(icao,e.popup);return}    // popup reopened: just refresh the data
-  // Leaflet's popup.update() rewrites string content and would wipe the weather box.
-  // Move the content into a DOM node first, so update() only re-attaches the same node.
+  if(box.querySelector(".wx")){fetchWx(icao,e.popup);return}
+
   const wrap=document.createElement("div");
   while(box.firstChild)wrap.appendChild(box.firstChild);
   e.popup.setContent(wrap);

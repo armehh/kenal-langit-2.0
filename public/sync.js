@@ -1,12 +1,10 @@
-// KenalLangit sync.js: saves progress to the cloud (Firestore via the server) so it survives a device change.
-// localStorage stays the fast, synchronous source the rest of the app reads; this file mirrors it to /api/progress.
-// Sign-in is anonymous by default; "Connect with Google" links that same account so another device can sign in to it.
-// Load AFTER home.js (it wraps ls.set and calls applyLang() to redraw after a pull).
+
+
 (()=>{
 const KEYS={known:"kl-known",course:"kl-course",last:"kl-last",best:"kl-best",name:"kl-name",visited:"kl-visited",flights:"kl-flights"};
-const META="kl-sync";                       // { uid, dirty }: which account this device's data was last synced with
+const META="kl-sync";
 const SDK="https://www.gstatic.com/firebasejs/10.12.2/";
-const rawSet=ls.set;                        // original setter: writes localStorage without triggering a push
+const rawSet=ls.set;
 let auth=null,user=null,applying=false,timer=null,pushing=false,configured=false;
 const subs=[];
 
@@ -16,19 +14,19 @@ const meta=()=>ls.get(META,{});
 const setMeta=m=>rawSet(META,m);
 const notify=()=>subs.forEach(f=>{try{f()}catch(e){}});
 
-function merge(a,b){                        // used only when two sets of progress meet for the first time
+function merge(a,b){
   const known={};
   new Set([...Object.keys(a.known),...Object.keys(b.known)]).forEach(k=>{known[k]=(a.known[k]===1||b.known[k]===1)?1:0});
   const course={};
   new Set([...Object.keys(a.course),...Object.keys(b.course)]).forEach(k=>{course[k]=Math.max(a.course[k]||0,b.course[k]||0)});
   const last=!a.last?b.last:!b.last?a.last:(a.last.d>=b.last.d?a.last:b.last);
-  const visited={...a.visited,...b.visited};                          // airports: union
-  const seen=new Set(),flights=[];                                    // flights: union by id, so both devices' logs survive
+  const visited={...a.visited,...b.visited};
+  const seen=new Set(),flights=[];
   [...(a.flights||[]),...(b.flights||[])].forEach(f=>{if(f&&!seen.has(f.id)){seen.add(f.id);flights.push(f)}});
   return {known,course,last,best:Math.max(a.best||0,b.best||0),name:a.name||b.name||"",visited,flights:flights.slice(0,300)};
 }
 
-function apply(p){                          // write remote progress into localStorage, then redraw if anything changed
+function apply(p){
   const before=JSON.stringify(read());
   applying=true;
   try{for(const f in KEYS)rawSet(KEYS[f],p[f]==null?(f=="best"?0:f=="name"?"":f=="last"?null:f=="flights"?[]:{}):p[f])}finally{applying=false}
@@ -48,13 +46,12 @@ async function push(keepalive){
   if(empty(p)){setMeta({uid:user.uid,dirty:false});return}
   pushing=true;
   try{await api("PUT",p,keepalive);setMeta({uid:user.uid,dirty:false})}
-  catch(e){setMeta({uid:user.uid,dirty:true})}      // retried on the next change, when the tab is shown again, or when back online
+  catch(e){setMeta({uid:user.uid,dirty:true})}
   finally{pushing=false}
 }
 
 function schedule(){clearTimeout(timer);timer=setTimeout(()=>push(),2000)}
 
-// Every write the app makes to a synced key marks this device dirty and schedules a push.
 ls.set=(k,v)=>{
   rawSet(k,v);
   if(applying||!Object.values(KEYS).includes(k))return;
@@ -64,13 +61,13 @@ ls.set=(k,v)=>{
 
 async function reconcile(){
   let remote=null;
-  try{remote=(await api("GET")).progress}catch(e){return}        // offline or server problem: stay local, try again later
+  try{remote=(await api("GET")).progress}catch(e){return}
   const m=meta(),local=read();
-  if(m.uid!==user.uid){                                           // first time this device meets this account: merge both sides
+  if(m.uid!==user.uid){
     const merged=remote?merge(local,remote):local;
     apply(merged);setMeta({uid:user.uid,dirty:true});await push();
-  }else if(m.dirty){await push()}                                 // edits made while offline win
-  else if(remote){apply(remote)}                                  // another device may have moved on: take the cloud copy
+  }else if(m.dirty){await push()}
+  else if(remote){apply(remote)}
   else await push();
 }
 
@@ -84,7 +81,7 @@ async function boot(){
   try{
     await loadScript(SDK+"firebase-app-compat.js");
     await loadScript(SDK+"firebase-auth-compat.js");
-  }catch(e){return}                                               // SDK blocked or offline: the app keeps working locally
+  }catch(e){return}
   firebase.initializeApp(cfg);
   auth=firebase.auth();
   configured=true;
@@ -93,34 +90,34 @@ async function boot(){
     user=u;
     await reconcile();
     mountUI();
-    notify();try{applyLang()}catch(e){}                           // lets the Home card show the sign-in state
+    notify();try{applyLang()}catch(e){}
   });
 }
 
 addEventListener("online",()=>{if(user&&meta().dirty)push()});
 document.addEventListener("visibilitychange",()=>{
   if(!user)return;
-  if(document.visibilityState=="hidden"){if(meta().dirty){clearTimeout(timer);push(true)}}   // flush before the tab goes away
+  if(document.visibilityState=="hidden"){if(meta().dirty){clearTimeout(timer);push(true)}}
   else if(meta().dirty)push();
 });
 
 window.KLSync={
   onChange:f=>subs.push(f),
   state:()=>({configured,ready:!!user,google:!!(user&&user.providerData.some(p=>p.providerId=="google.com")),email:user&&user.email||""}),
-  async link(){                                                   // keep the same account and add Google to it
+  async link(){
     const prov=new firebase.auth.GoogleAuthProvider();
     try{
       await user.linkWithPopup(prov);
-      await user.getIdToken(true);                                // refresh so the server sees the Google link before the first push
+      await user.getIdToken(true);
       await push();notify();try{applyLang()}catch(e){}
     }catch(e){
-      if(e.code=="auth/credential-already-in-use"&&e.credential){await auth.signInWithCredential(e.credential)}   // existing Google account: onAuthStateChanged merges this device in
+      if(e.code=="auth/credential-already-in-use"&&e.credential){await auth.signInWithCredential(e.credential)}
       else if(e.code=="auth/popup-closed-by-user"||e.code=="auth/cancelled-popup-request"){return}
       else throw e;
     }
   },
-  prompt(){if(user&&!window.KLSync.state().google){openPop();return true}return false},   // lets the Trips tab open the sign-in popover
-  async signOut(){                                                // shared-device safety: remove local progress, then start fresh
+  prompt(){if(user&&!window.KLSync.state().google){openPop();return true}return false},
+  async signOut(){
     await push();
     Object.values(KEYS).forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});
     try{localStorage.removeItem(META)}catch(e){}
@@ -129,7 +126,6 @@ window.KLSync={
   },
 };
 
-// ---------- Header account button + sign-in popover ----------
 const A={
 ms:{in:"Log masuk",acct:"Akaun",title:"Simpan kemajuan awak",body:"Log masuk dengan Google supaya kemajuan kuiz, Belajar dan Jejak penerbangan boleh dibuka di peranti lain. Jejak hanya untuk akaun Google. Tanpa log masuk, kemajuan hanya terikat pada pelayar ini.",go:"Teruskan dengan Google",later:"Nanti",as:e=>`Disegerakkan sebagai ${e}`,out:"Log keluar",outAsk:"Log keluar dan kosongkan kemajuan di peranti ini? Kemajuan kekal selamat dalam akaun awak.",err:"Tidak dapat log masuk. Cuba lagi."},
 en:{in:"Sign in",acct:"Account",title:"Save your progress",body:"Sign in with Google so your quiz, Learn and Trips progress works on other devices. Trips needs a Google account. Without signing in, progress stays tied to this browser.",go:"Continue with Google",later:"Not now",as:e=>`Synced as ${e}`,out:"Sign out",outAsk:"Sign out and clear progress on this device? It stays safe in your account.",err:"Could not sign in. Please try again."}
@@ -185,9 +181,8 @@ function mountUI(){
 document.addEventListener("click",e=>{if(pop&&!pop.contains(e.target)&&e.target!==btn&&!btn.contains(e.target))closePop()});
 document.addEventListener("keydown",e=>{if(e.key=="Escape")closePop()});
 const _al=applyLang;
-applyLang=function(){_al();renderBtn();if(pop)openPop()};            // redraw the popover too when the language changes
+applyLang=function(){_al();renderBtn();if(pop)openPop()};
 
-// One gentle nudge, once: right after the first finished quiz, offer to save progress.
 const _fin2=finish;
 finish=function(){
   _fin2();

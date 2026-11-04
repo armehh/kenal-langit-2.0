@@ -1,8 +1,8 @@
-// KenalLangit guided tour (tour.js): 25 steps. Load AFTER extras.js, characters.js, panel.js and home.js.
-// Images: public/img/guide/step-NN.png. Each step keeps its ORIGINAL image number (field 6); new steps use 0 and fall back to the rabbit (img/characters/arnab-*.webp), then to an emoji.
+
+
 (()=>{
 const E={m:"🧑‍✈️",w:"👩‍✈️",b:"🐰"};
-// [character, tab, element to highlight, BM text, EN text, image number (0 = none), Learn view ("path" | "cards")]
+
 const S=[
 ["m","map","","Hai! Saya akan tunjuk cara guna KenalLangit.","Hi! Let me show you around KenalLangit.",1],
 ["m","map","","Setiap ikon ✈ ialah pesawat di ruang udara Malaysia. Warnanya ikut syarikat penerbangan.","Each ✈ icon is an aircraft over Malaysian airspace, coloured by airline.",2],
@@ -79,7 +79,7 @@ function draw(){
   if(s[5])img.src=`img/guide/step-${String(s[5]).padStart(2,"0")}.png`;else img.onerror();
   pic.appendChild(img);
 }
-function learnView(v){                       // drive the Learn tab's own buttons (its state lives in kuiz.js)
+function learnView(v){
   const q=x=>document.querySelector("#lbox "+x);
   if(v=="cards"){let b=q('.ltabs [data-v="cards"]');if(!b){const back=q('[data-nav="path"]');if(back){back.click();b=q('.ltabs [data-v="cards"]')}}if(b)b.click()}
   else{const b=q('.ltabs [data-v="path"]')||q('[data-nav="path"]');if(b)b.click()}
@@ -109,7 +109,6 @@ addEventListener("keydown",e=>{if(e.key=="Escape"&&!box.hidden)close()});
 const _al=applyLang;
 applyLang=function(){_al();if(!box.hidden)draw();help.setAttribute("aria-label",u("help"))};
 
-// First visit: start after the hero card is dismissed. Later visits: just show the ? button.
 let done=false;try{done=localStorage.getItem("kl-tour")=="1"}catch(e){}
 help.setAttribute("aria-label",u("help"));
 if(done)help.hidden=false;
