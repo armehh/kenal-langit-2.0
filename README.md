@@ -8,13 +8,14 @@
 
 KenalLangit is a Malaysia-focused flight tracker and aviation learning app. It combines a live map of Malaysian airspace with quizzes, short aviation lessons and curated videos, so people who fly often (but cannot say what "KCH" or "TGG" stands for) can finally remember airport codes, and learn a little about how flying works along the way.
 
-**Live demo:** https://kenal-langit.onrender.com
+**Live demo:** https://kenal-langit-2-0.onrender.com
 *(Hosted on a free instance. The first visit after a quiet period may take a little while to wake up.)*
 
-<!-- Add screenshots here, for example:
-![Map](docs/screenshots/map.png)
-![Quiz](docs/screenshots/quiz.png)
--->
+<img width="2782" height="1486" alt="image" src="https://github.com/user-attachments/assets/07b87a98-7363-4f53-9b2b-0d8fca3c8580" />
+<img width="2798" height="1484" alt="image" src="https://github.com/user-attachments/assets/f574e86b-fab6-4d43-8533-354468a99d3b" />
+<img width="2794" height="1522" alt="image" src="https://github.com/user-attachments/assets/30603b2a-13a4-4a97-8d42-5d0a9dcf497d" />
+
+
 
 ## What's new in 2.0
 
