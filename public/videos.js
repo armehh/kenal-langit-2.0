@@ -1,10 +1,7 @@
-// KenalLangit "Video" tab: curated YouTube aviation videos. Load AFTER tour.js (this replaces podcast.js).
-// Tap a card to watch inside the page (YouTube player), or use the YouTube link to open it on YouTube.
-// Needs: img/characters/pramugari-lambai.webp and the .coach/.bubble/.rabbit styles from characters.js
+
+
 (()=>{
-  // ===================== EDIT HERE: add a video by copying one line =====================
-  // [YouTube link or 11-character ID, category, title, channel name (or "")]
-  // Categories: galley (cabin crew life) | msia (Malaysia) | learn (learn aviation)
+
   const VIDEOS=[
   ["https://www.youtube.com/watch?v=0hCCrEcVxYw","galley","Borak Dalam Galley EP 183 - Faizol Is Back!!","Borak Dalam Galley"],
   ["https://www.youtube.com/watch?v=OTBWY3DWXIA","galley","Borak Dalam Galley EP 115 feat Spacedollah - Parents Ingat Sy Jadi Engineer di Emirates","Borak Dalam Galley"],
@@ -20,8 +17,7 @@
   ["https://www.youtube.com/watch?v=y6g7xCyp8YM","learn","Air Traffic Control 101",""],
   ["https://www.youtube.com/watch?v=6OkJR6d5AoE","learn","How Air Traffic Control Works",""]
   ];
-  // =====================================================================================
-  
+
   const BASE="img/characters/";
   const X={
   ms:{tab:"Video",title:"Video Aviation",
@@ -43,17 +39,15 @@
   };
   const x=k=>X[lang][k];
   const CATS=["all","galley","msia","learn"];
-  
-  // Accepts a full YouTube link (watch, youtu.be, shorts, embed) or a bare 11-character ID
+
   const vid=u=>{const m=String(u).match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([\w-]{11})/);return m?m[1]:(/^[\w-]{11}$/.test(String(u))?String(u):null)};
   const LIST=VIDEOS.map(v=>({id:vid(v[0]),c:v[1],t:v[2],by:v[3]||""})).filter(v=>v.id);
   const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const ytUrl=id=>`https://www.youtube.com/watch?v=${id}`;
   const inCat=()=>LIST.filter(v=>filter=="all"||v.c==filter);
-  
+
   let sec,navBtn,box,filter="all",cur=null;
-  
-  // ---------- styles ----------
+
   const st=document.createElement("style");
   st.textContent=`
   .panel.vd{max-width:900px}
@@ -85,8 +79,7 @@
   nav button{min-width:0}nav button b{white-space:nowrap}
   @media (max-width:420px){nav button b{font-size:.7rem}}`;
   document.head.appendChild(st);
-  
-  // ---------- DOM ----------
+
   sec=document.createElement("section");sec.id="video";
   sec.innerHTML=`<div class="panel vd"><div class="card" id="vdbox"></div></div>`;
   $("main").appendChild(sec);box=$("#vdbox");
@@ -94,8 +87,7 @@
   $("nav").insertBefore(navBtn,$('nav [data-tab="board"]'));
   navBtn.onclick=()=>go("video");
   const label=()=>{navBtn.querySelector("b").textContent=x("tab")};label();
-  
-  // ---------- list view ----------
+
   const host=()=>`<div class="coach"><img class="rabbit" src="${BASE}pramugari-lambai.webp" alt="" width="63" height="110" decoding="async"><div class="bubble">${x("hi")}</div></div>`;
   function card(v){
     const i=LIST.indexOf(v);
@@ -118,8 +110,7 @@
     $$("#vdbox .vd-play").forEach(b=>b.onclick=()=>openVideo(+b.dataset.i));
     $$("#vdbox .vd-th img").forEach(im=>im.onerror=()=>im.remove());
   }
-  
-  // ---------- player view ----------
+
   function openVideo(i){
     cur=i;const v=LIST[i];
     box.innerHTML=`<button type="button" id="vdback">${x("back")}</button>
@@ -128,7 +119,7 @@
     $("#vdback").onclick=drawList;
     drawInfo();
   }
-  // Text and buttons only, so a language change never restarts the video
+
   function drawInfo(){
     const v=LIST[cur],l=inCat(),k=l.indexOf(v),has=k>=0&&l.length>1;
     $("#vdinfo").innerHTML=`<p class="vd-now">${esc(v.t)}</p>${v.by?`<p class="vd-by" style="padding:0">${esc(v.by)}</p>`:""}
@@ -142,11 +133,10 @@
       $("#vdnext").onclick=()=>openVideo(LIST.indexOf(l[(k+1)%l.length]));
     }
   }
-  
-  // ---------- hooks into the existing app ----------
+
   const _go=go;
   go=function(tab){
-    // leaving the tab stops the video by dropping the player
+
     if(tab!=="video"&&sec.classList.contains("on")&&cur!==null)drawList();
     _go(tab);
     if(tab==="video"&&!box.innerHTML)drawList();

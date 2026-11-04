@@ -1,5 +1,5 @@
-// KenalLangit: aviation course units. Each unit = lesson points + 3 check questions (also used by the "Aviation knowledge" quiz mode).
-// q = [stem BM, stem EN, options (string or [BM,EN]), correct index, [explanation BM, explanation EN]]
+
+
 const KL_UNITS=[
 {id:"u1",ic:"🏷️",t:["Kod lapangan terbang","Airport codes"],
  p:[["IATA: 3 huruf, tertera pada tiket dan tag beg (KUL, PEN).","IATA: 3 letters, printed on tickets and bag tags (KUL, PEN)."],

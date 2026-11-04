@@ -1,4 +1,4 @@
-// KenalLangit extras: load AFTER the main script. Wraps existing functions, does not replace the main file.
+
 (()=>{
 const X={
 ms:{h1:"Kenal langit, ",h2:"hafal lapangan terbang.",sub:"Teroka lapangan terbang Malaysia di peta, kemudian uji sejauh mana awak kenal kod dan namanya.",quiz:"Mula kuiz",explore:"Teroka peta",test:"Uji saya",share:"Kongsi keputusan",copied:"Disalin!",r4:"Kapten",r3:"Pegawai Pertama",r2:"Juruterbang Pelatih",r1:"Penumpang Setia",
@@ -8,7 +8,6 @@ en:{h1:"Know the skies, ",h2:"know your airports.",sub:"Explore Malaysia's airpo
 };
 const x=k=>X[lang][k];
 
-// 1. Hero card on the map (once per browser session)
 const hero=document.createElement("div");hero.className="hero";
 L.DomEvent.disableClickPropagation(hero);
 function hideHero(){hero.remove();try{sessionStorage.setItem("kl-hero","1")}catch(e){}}
@@ -22,7 +21,6 @@ if(!seen){drawHero();$("#map").appendChild(hero)}
 const _al=applyLang;
 applyLang=function(){_al();if(hero.isConnected)drawHero()};
 
-// 2. Airport code labels + "Test me" button in popups
 const _bm=buildMarkers;
 buildMarkers=function(){
   _bm();
@@ -41,7 +39,6 @@ map.on("popupopen",e=>{
   };
 });
 
-// 3. Cultural fact on the back of flashcards
 const _bc=buildCards;
 buildCards=function(){
   _bc();
@@ -52,7 +49,6 @@ buildCards=function(){
   });
 };
 
-// 4. Rank title and share button on the result screen
 const _fin=finish;
 finish=function(){
   _fin();

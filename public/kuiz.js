@@ -1,10 +1,9 @@
-// KenalLangit quiz + learn upgrade. Load AFTER the main script and aviation.js, BEFORE extras.js (extras wraps finish/buildCards).
+
 (()=>{
 const L=x=>Array.isArray(x)?x[lang=="ms"?0:1]:x;
 Object.assign(T.ms,{m3:"IATA → ICAO",m4:"Negeri",m5:"Fakta → Lapangan",m6:"Pengetahuan penerbangan",m7:"Campuran",path:"Laluan",cards:"Kad",back:"← Kembali",check:"Uji pemahaman",nextU:"Unit seterusnya",ap0:"Kenali 18 lapangan terbang",ap0d:"Flashcard ikut kawasan",unit:"Unit",rec:"Seterusnya",units:"unit selesai",mk:["Betul!","Salah."],qn:"soalan",nolv:"Mod ini tiada tahap; semua soalan dari unit Belajar."});
 Object.assign(T.en,{m3:"IATA → ICAO",m4:"State",m5:"Fact → Airport",m6:"Aviation knowledge",m7:"Mixed",path:"Path",cards:"Cards",back:"← Back",check:"Check your understanding",nextU:"Next unit",ap0:"Meet the 18 airports",ap0d:"Flashcards by region",unit:"Unit",rec:"Up next",units:"units done",mk:["Correct!","Wrong."],qn:"questions",nolv:"This mode has no levels; questions come from the Learn units."});
 
-// ---------- QUESTION GENERATORS ----------
 const nm=a=>[NAMES[a.iata][0],NAMES[a.iata][1]];
 const opts=(ok,others)=>shuffle([ok,...others]);
 const gen={
@@ -25,7 +24,6 @@ function build(){
   return ai.slice(0,10).map(a=>gen[m](a,P));
 }
 
-// ---------- QUIZ UI ----------
 const MI={1:["🏷️","Teka nama daripada kod","Guess the name from the code"],2:["🔠","Teka kod daripada nama","Guess the code from the name"],3:["🧾","Padankan kod IATA dengan ICAO","Match IATA to ICAO codes"],4:["📍","Di negeri mana lapangan ini?","Which state is it in?"],5:["💡","Teka lapangan daripada fakta","Guess the airport from a fact"],6:["✈️","Soalan am daripada unit Belajar","General questions from the Learn units"],7:["🎲","Gabungan semua jenis soalan","A bit of every question type"]};
 setup=function(){
   Q=null;
@@ -46,7 +44,7 @@ setup=function(){
   refresh();
 };
 ask=function(){
-  if(Q.list[0]&&Q.list[0].iata)Q.list=Q.list.map(a=>gen[1](a,AIRPORTS)); // "Test me" from the map
+  if(Q.list[0]&&Q.list[0].iata)Q.list=Q.list.map(a=>gen[1](a,AIRPORTS));
   Q.missedQ=Q.missedQ||[];
   if(Q.i>=Q.list.length)return finish();
   const q=Q.list[Q.i];
@@ -93,7 +91,6 @@ finish=function(){
   };
 };
 
-// ---------- LEARN: structured path -> unit -> check, plus flashcards ----------
 const LV={v:"path",a:{}};
 const prog=()=>ls.get("kl-course",{});
 const isDone=id=>(prog()[id]||0)>=2;

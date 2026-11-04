@@ -1,12 +1,10 @@
-// KenalLangit home.js: "Utama / Home" dashboard page, opened by tapping the KenalLangit logo in the header (no bottom-bar tab).
-// Cards: live sky summary, KUL weather (METAR), your progress (+ top 3), quick actions.
-// Uses data the app already fetches (/api/flights, /api/weather/WMKK, /api/leaderboard) + localStorage. No new backend, no AirLabs calls.
-// Load AFTER videos.js (and therefore after panel.js, which provides the click-a-plane hook).
+
+
 (()=>{
-// ---- EDIT HERE: your links ----
+
 const ME={name:"Armin Rafiqin",role:{ms:"Pelajar Kejuruteraan Perisian (Pembangunan Sistem Multimedia), UKM",en:"Software Engineering (Multimedia System Development) student, UKM"},
   github:"https://github.com/armehh",githubLabel:"@armehh",linkedin:"https://linkedin.com/in/armin-rafiqin",linkedinLabel:"armin-rafiqin",repo:"https://github.com/armehh/kenal-langit-2.0"};
-// [label, url] shown under "Credits"
+
 const CREDITS=[["adsb.lol · airplanes.live · adsb.fi","https://adsb.lol"],["OpenSky Network","https://opensky-network.org"],["AviationWeather.gov (NOAA)","https://aviationweather.gov"],["adsbdb","https://www.adsbdb.com"],["AirLabs","https://airlabs.co"],["OpenStreetMap","https://www.openstreetmap.org/copyright"],["CARTO","https://carto.com/attributions"],["Leaflet","https://leafletjs.com"]];
 const H={
 ms:{about:"Tentang projek",madeBy:"Dibina oleh",guest:"Kadet",nameLbl:"Tukar nama",namePh:"Nama awak",save:"Simpan",cancel:"Batal",ghBtn:"GitHub",liBtn:"LinkedIn",star:"Beri ⭐ di GitHub",credits:"Kredit",creditsTxt:"Data penerbangan, cuaca, laluan, status dan peta datang daripada sumber awam di bawah. Video kepunyaan pemilik saluran masing-masing di YouTube. Projek pembelajaran, bukan untuk navigasi penerbangan sebenar.",logo:"Halaman utama",hi:n=>`Hai, ${n}`,welcome:"Selamat datang",sub:"Ringkasan langit Malaysia sekarang.",
@@ -34,7 +32,6 @@ const km=(a,b,c,d)=>{const r=Math.PI/180;return 6371*Math.hypot((c-a)*r,(d-b)*r*
 const RANK_ICON=["","🧳","🎓","👨‍✈️","🏅"];
 const MEDAL=["🥇","🥈","🥉"];
 
-// ---------- styles ----------
 const st=document.createElement("style");
 st.textContent=`
 .hm{max-width:900px;margin:0 auto;padding:16px;display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
@@ -93,11 +90,10 @@ st.textContent=`
 .logo:focus-visible{outline:2px solid var(--cyan);outline-offset:4px}`;
 document.head.appendChild(st);
 
-// ---------- DOM: nav tab + section ----------
 const sec=document.createElement("section");sec.id="home";sec.innerHTML=`<div class="hm" id="hbox"></div>`;
 $("main").appendChild(sec);
 const box=$("#hbox");
-// the logo in the header is the Home button
+
 const logo=$("header .logo");
 logo.setAttribute("role","button");logo.tabIndex=0;
 const label=()=>{const t=h("logo");logo.setAttribute("aria-label",t);logo.title=t};label();
@@ -105,7 +101,6 @@ logo.onclick=()=>go("home");
 logo.addEventListener("keydown",e=>{if(e.key=="Enter"||e.key==" "){e.preventDefault();go("home")}});
 const isOn=()=>sec.classList.contains("on");
 
-// ---------- data: live flights (same hook style as panel.js) ----------
 let fl=[],tm;
 const _plane=plane;
 plane=function(f){
@@ -116,7 +111,6 @@ plane=function(f){
   if(isOn()){clearTimeout(tm);tm=setTimeout(render,80)}
 };
 
-// ---------- data: KUL weather (5 min client cache, server also caches) ----------
 let wx=null,wxBusy=false;
 const wxFresh=()=>wx&&Date.now()-wx.t<(wx.v==="err"?60000:300000);
 async function loadWx(){
@@ -127,7 +121,6 @@ async function loadWx(){
   if(isOn())render();
 }
 
-// ---------- data: leaderboard top 3 ----------
 let board=null,boardT=0,boardBusy=false;
 async function loadBoard3(){
   if(boardBusy||Date.now()-boardT<60000)return;
@@ -137,7 +130,6 @@ async function loadBoard3(){
   if(isOn())render();
 }
 
-// ---------- remember the last quiz (the app only kept it in memory) ----------
 const _fin=finish;
 finish=function(){
   _fin();
@@ -148,7 +140,6 @@ finish=function(){
   }catch(e){}
 };
 
-// ---------- helpers ----------
 function age(t){
   if(t==null)return "";
   const m=Math.max(0,Math.round((Date.now()/1000-t)/60));
@@ -165,7 +156,7 @@ function visTxt(m){
   const k=sm*1.609;
   return `${String(m.visib).includes("+")?"≥ ":""}${k>=10?Math.round(k):k.toFixed(1)} km`;
 }
-function busiest(){                       // airport with the most aircraft nearest to it (within 100 km)
+function busiest(){
   if(flightSrc!="live"||!fl.length)return null;
   const c={};
   fl.forEach(f=>{
@@ -179,7 +170,6 @@ function busiest(){                       // airport with the most aircraft near
 const course=()=>ls.get("kl-course",{});
 const nextUnit=()=>{const p=course();const i=KL_UNITS.findIndex(u=>(p[u.id]||0)<2);return i<0?null:{u:KL_UNITS[i],i}};
 
-// ---------- render ----------
 function liveCard(){
   const n=fl.length,live=flightSrc=="live";
   const by={};fl.forEach(f=>{const k=AL[pre(f)]?pre(f):"_";by[k]=(by[k]||0)+1});
@@ -214,12 +204,12 @@ function syncRow(){
     ?`<div class="hm-sync"><p class="hm-note">${esc(h("syncGoogle")(S.email))}</p><button class="hm-link" data-a="gout">${h("gOut")}</button></div>`
     :`<div class="hm-sync"><p class="hm-note">${h("syncAnon")}</p><button class="hm-lk pri" data-a="gconn"><span>${h("gConn")}</span></button><p class="hm-note" id="hsErr" hidden>${h("gErr")}</p></div>`;
 }
-function progCard(){                              // total points decide the rank; every source is capped so it cannot be farmed
+function progCard(){
   const kn=ls.get("kl-known",{}),nk=AIRPORTS.filter(a=>kn[a.iata]===1).length,nt=AIRPORTS.length;
   const p=course(),nu=KL_UNITS.filter(u=>(p[u.id]||0)>=2).length,tu=KL_UNITS.length;
   const last=ls.get("kl-last",null),best=ls.get("kl-best",0);
-  const T=window.KLTrip&&KLTrip.summary(),S0=window.KLSync&&KLSync.state();     // Trips is for Google accounts only
-  const FL=T?Math.min(T.fl,20):0;                                                // self-reported flights count for 20 at most
+  const T=window.KLTrip&&KLTrip.summary(),S0=window.KLSync&&KLSync.state();
+  const FL=T?Math.min(T.fl,20):0;
   const pts=[nk*10,nu*30,T?T.ap*10:0,FL*5,T?T.bd*20:0],total=pts.reduce((a,b)=>a+b,0);
   const TH=[0,100,250,450],k=TH.filter(x=>total>=x).length,nxt=TH[k];
   const bar=(t,a,b,q)=>`<div class="hm-stat"><div class="t"><span>${t}</span><b>${a}/${b}${q==null?"":` · ${q} ${h("pts")}`}</b></div><div class="bar"><i style="width:${Math.min(100,a/b*100)}%"></i></div></div>`;
@@ -264,18 +254,17 @@ function topBlock(nm){
   return `<h1>${esc(h("hi")(nm||h("guest")))} 👋<button class="hm-edit" data-a="name" title="${esc(h("nameLbl"))}" aria-label="${esc(h("nameLbl"))}">✏️</button></h1>`;
 }
 function render(){
-  if(editing)return;                       // do not wipe what the user is typing
+  if(editing)return;
   const nm=ls.get("kl-name","");
   box.innerHTML=`<div class="full hm-top">${topBlock(nm)}<p>${h("sub")}</p></div>
   ${actCard()}${liveCard()}${wxCard()}${progCard()}${aboutCard()}`;
 }
 
-// ---------- actions ----------
 function dropHero(){const e=document.querySelector(".hero");if(e){e.remove();try{sessionStorage.setItem("kl-hero","1")}catch(x){}}}
 function openFlight(k){
   const f=fl.find(x=>key(x)==k);if(!f)return;
   dropHero();go("map");
-  setTimeout(()=>{if(f.marker)f.marker.fire("click")},80);    // panel.js: clicking a plane opens its detail card
+  setTimeout(()=>{if(f.marker)f.marker.fire("click")},80);
 }
 function openAirport(iata){
   const i=AIRPORTS.findIndex(a=>a.iata==iata),m=apLayer.getLayers()[i];if(!m)return;
@@ -283,11 +272,11 @@ function openAirport(iata){
   if(!map.hasLayer(apLayer))map.addLayer(apLayer);
   map.flyTo(m.getLatLng(),9,{duration:.8});map.once("moveend",()=>m.openPopup());
 }
-function quizAirport(a){                                       // same as the "Test me" button in the airport popup
+function quizAirport(a){
   Q={pool:AIRPORTS,list:[a,...shuffle(AIRPORTS.filter(z=>z!==a)).slice(0,9)],i:0,score:0,streak:0,missed:[],opts:null,finished:false};
   go("quiz");ask();
 }
-function openLearn(view,unitId){                               // drives the Learn tab's own buttons (its state is private to kuiz.js)
+function openLearn(view,unitId){
   go("learn");
   const q=s=>document.querySelector("#lbox "+s);
   if(view=="cards"){const b=q('.ltabs [data-v="cards"]');if(b)b.click();return}
@@ -317,12 +306,11 @@ box.addEventListener("submit",e=>{
   if(e.target.id!="hnf")return;
   e.preventDefault();
   const v=$("#hni").value.replace(/[<>]/g,"").trim().slice(0,20);
-  ls.set("kl-name",v);                      // empty = back to the generic greeting; the quiz result screen reuses this name
+  ls.set("kl-name",v);
   editing=false;render();
 });
 box.addEventListener("keydown",e=>{if(e.key=="Escape"&&editing){editing=false;render()}});
 
-// ---------- hooks into the existing app ----------
 const _go=go;
 go=function(tab){
   _go(tab);

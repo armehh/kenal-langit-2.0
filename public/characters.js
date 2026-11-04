@@ -1,17 +1,15 @@
-// KenalLangit characters: Arnab (rabbit mascot) plus the two cabin crew, Pramugara and Pramugari,
-// who take turns guiding the quiz. Load AFTER extras.js.
-// Needs: img/characters/arnab-{berdiri,idea,duduk,jalan}.webp
-//        img/characters/{pramugara,pramugari}-{berdiri,lambai,tunjuk,tiket,bagus}.webp
+
+
 (()=>{
 const BASE="img/characters/";
-// width/height are the source image size, so the layout stays stable while an image loads
+
 const CAST={
   arnab:{poses:["berdiri","idea","duduk","jalan"],w:310,h:587},
   pramugara:{poses:["lambai","tunjuk","bagus"],w:332,h:560},
   pramugari:{poses:["lambai","tunjuk","bagus"],w:321,h:560}
 };
 Object.entries(CAST).forEach(([who,o])=>o.poses.forEach(p=>{new Image().src=`${BASE}${who}-${p}.webp`}));
-// Quiz answers: the three guides take turns, one per question
+
 const TURN=["arnab","pramugari","pramugara"];
 
 const C={
@@ -36,7 +34,6 @@ st.textContent=`
 `;
 document.head.appendChild(st);
 
-// 1. Rabbit peeking over the hero card (extras.js rebuilds the card on language change, so re-dress it)
 const dressHero=h=>{if(!h.querySelector(".mascot-hero"))h.insertAdjacentHTML("afterbegin",img("berdiri","mascot-hero"))};
 function watchHero(h){dressHero(h);new MutationObserver(()=>dressHero(h)).observe(h,{childList:true})}
 const h0=$(".hero");if(h0)watchHero(h0);
@@ -44,7 +41,6 @@ new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{
   if(n.classList&&n.classList.contains("hero"))watchHero(n);
 }))).observe($("#map"),{childList:true});
 
-// 2. Quiz: welcome on the setup screen, a fact after every answer, goodbye on the result screen
 function paint(){
   if(!Q){
     if($("#go")&&!$("#qbox .coach"))$("#qbox h2").insertAdjacentHTML("afterend",coach("pramugara","lambai",c("setup")));

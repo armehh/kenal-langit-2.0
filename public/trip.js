@@ -1,8 +1,5 @@
-// KenalLangit trip.js: "Jejak" tab. Airports you have been to, a log of flights you have taken, and badges worked out from both.
-// Data lives in two localStorage keys that sync.js mirrors to the cloud:
-//   kl-visited = { IATA: 1 }                                  airports marked "pernah sampai"
-//   kl-flights = [{ id, al, ac, f, t, d }]                    airline, aircraft type, from, to ("INT" = overseas), date "YYYY-MM-DD" or null
-// Stats and badges are derived on every draw, never stored. Load AFTER home.js and BEFORE sync.js.
+
+
 (()=>{
 const KV="kl-visited",KF="kl-flights",MAXF=300;
 const TT={
@@ -38,18 +35,16 @@ const L2=a=>a[lang=="ms"?0:1];
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const AP=Object.fromEntries(AIRPORTS.map(a=>[a.iata,a]));
 
-// [name, ...aliases (IATA/ICAO codes)] so "ak", "AXM" and "airasia" all count as one airline
 const AIRLINES=[["Malaysia Airlines","MH","MAS"],["AirAsia","AK","AXM"],["AirAsia X","D7","XAX"],["Firefly","FY","FFM"],["Batik Air Malaysia","OD","MXD"],["MASwings","MWG"],["Scoot","TR","TGW"],["Singapore Airlines","SQ","SIA"],["Thai AirAsia","FD","AIQ"]];
 const TYPES={A320:"Airbus A320",A20N:"Airbus A320neo",A321:"Airbus A321",A21N:"Airbus A321neo",A330:"Airbus A330",A333:"Airbus A330-300",A339:"Airbus A330-900",A350:"Airbus A350",A359:"Airbus A350-900",A380:"Airbus A380",
   B737:"Boeing 737",B738:"Boeing 737-800",B38M:"Boeing 737 MAX 8",B777:"Boeing 777",B77W:"Boeing 777-300ER",B787:"Boeing 787",B789:"Boeing 787-9",AT72:"ATR 72-500",AT76:"ATR 72-600",DH8D:"Dash 8 Q400",DHC6:"DHC-6 Twin Otter"};
 
-// ---------- data ----------
-const gOK=()=>{try{return !!(window.KLSync&&KLSync.state().google)}catch(e){return false}};   // Trips data is only for signed-in Google accounts
+const gOK=()=>{try{return !!(window.KLSync&&KLSync.state().google)}catch(e){return false}};
 const needLogin=()=>{try{return !!(window.KLSync&&KLSync.prompt&&KLSync.prompt())}catch(e){return false}};
 const visited=()=>{if(!gOK())return {};const v=ls.get(KV,{});return v&&typeof v=="object"&&!Array.isArray(v)?v:{}};
 const flights=()=>{if(!gOK())return [];const f=ls.get(KF,[]);return Array.isArray(f)?f.filter(x=>x&&typeof x=="object"):[]};
 const hav=(a,b)=>{const r=Math.PI/180,p=(b.lat-a.lat)*r,q=(b.lng-a.lng)*r,x=Math.sin(p/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(q/2)**2;return 12742*Math.asin(Math.sqrt(x))};
-const dist=x=>AP[x.f]&&AP[x.t]?hav(AP[x.f],AP[x.t]):0;           // overseas legs have no coordinates: not counted
+const dist=x=>AP[x.f]&&AP[x.t]?hav(AP[x.f],AP[x.t]):0;
 const canonAirline=raw=>{
   const s=String(raw||"").replace(/[<>]/g,"").replace(/\s+/g," ").trim().slice(0,30),l=s.toLowerCase();
   const hit=AIRLINES.find(a=>a[0].toLowerCase()==l||a.slice(1).includes(s.toUpperCase()));
@@ -69,7 +64,6 @@ function stats(){
   return {fl:fl.length,ap:AIRPORTS.filter(a=>v[a.iata]).length,reg,al,ac,km:Math.round(km)};
 }
 
-// ---------- badges: [id, icon, name, how to earn, progress(stats) -> [now, target]] ----------
 const BADGES=[
  ["ap1","📍",["Pendaratan Pertama","First Landing"],["Tanda 1 lapangan terbang","Mark 1 airport"],s=>[s.ap,1]],
  ["sem","🏞️",["Semua Semenanjung","All Peninsular"],["Tanda semua lapangan terbang Semenanjung","Mark every Peninsular airport"],s=>[s.reg.Semenanjung.n,s.reg.Semenanjung.t]],
@@ -86,7 +80,6 @@ const BADGES=[
 ];
 const earned=s=>BADGES.filter(b=>{const p=b[4](s);return p[0]>=p[1]});
 
-// ---------- styles ----------
 const st=document.createElement("style");
 st.textContent=`
 .tr{max-width:760px;display:grid;gap:14px}
@@ -131,7 +124,6 @@ st.textContent=`
 `;
 document.head.appendChild(st);
 
-// ---------- tab: nav button + section ----------
 const sec=document.createElement("section");sec.id="trip";
 sec.innerHTML=`<div class="panel tr" id="tbox"><div id="t-top"></div><div id="t-ap"></div><div id="t-add"></div><div id="t-log"></div></div>`;
 $("main").appendChild(sec);
@@ -140,7 +132,7 @@ $("nav").insertBefore(nb,$('nav [data-tab="video"]')||$('nav [data-tab="board"]'
 nb.onclick=()=>go("trip");
 const isOn=()=>sec.classList.contains("on");
 const draft={al:"",ac:"",f:"",t:"",d:""};
-let msg=null;                                   // {k, t}: feedback under the form
+let msg=null;
 
 function drawTop(){
   const s=stats(),e=earned(s);
@@ -168,7 +160,7 @@ const opt=(val,txt,cur)=>`<option value="${esc(val)}"${val==cur?" selected":""}>
 const routes=cur=>`<option value="">${tr("pick")}</option>`+AIRPORTS.map(a=>opt(a.iata,`${a.iata} · ${a.city}`,cur)).join("")+opt("INT",tr("intl"),cur);
 const alList=id=>`<datalist id="${id}">${AIRLINES.map(a=>`<option value="${esc(a[0])}">`).join("")}</datalist>`;
 const acList=id=>`<datalist id="${id}">${Object.entries(TYPES).map(([k,n])=>`<option value="${k}" label="${esc(n)}">`).join("")}</datalist>`;
-function drawForm(){                              // built once per language so typing is never wiped by a redraw
+function drawForm(){
   if(!gOK()){$("#t-add").innerHTML="";return}
   $("#t-add").innerHTML=`<div class="card"><h2 class="tr-h"><span>🛫 ${tr("addT")}</span></h2>
   <form class="tr-form" id="t-form" novalidate>
@@ -194,14 +186,13 @@ function drawLog(){
   <div class="lbl" style="margin-top:0">${tr("collAc")}</div>${chips(Object.fromEntries(Object.entries(s.ac).map(([k,n])=>[k,{k,n}])),a=>`<span class="tr-chip" title="${esc(TYPES[a.k]||"")}">${esc(a.k)}<b>${a.n}</b></span>`)}
   <p class="tr-note">${tr("note")}</p></div>`;
 }
-function drawGate(){                              // not signed in with Google: show only the sign-in card
+function drawGate(){
   $("#t-top").innerHTML=`<div><h1>🧳 ${tr("title")}</h1><p class="sub">${tr("sub")}</p></div>`;
   $("#t-ap").innerHTML=`<div class="card"><h2 class="tr-h"><span>🔒 ${tr("gateT")}</span></h2><p class="tr-note" style="margin:0 0 12px">${tr("gateB")}</p><button class="cta" type="button" id="t-login" style="margin:0">${tr("gateGo")}</button><p class="tr-msg" id="t-gmsg" role="status"></p></div>`;
   $("#t-add").innerHTML="";$("#t-log").innerHTML="";
 }
 const draw=()=>{if(!gOK())return drawGate();drawTop();drawAirports();drawLog()};
 
-// ---------- actions ----------
 function paintMarker(code){
   const i=AIRPORTS.findIndex(a=>a.iata==code),m=apLayer.getLayers()[i];if(!m)return;
   const el=m.getElement&&m.getElement(),dot=el&&el.querySelector(".ap");
@@ -222,7 +213,7 @@ function setVisited(code,on){
 }
 const toggleVisited=code=>setVisited(code,!visited()[code]);
 
-function addFlight(al,ac,from,to,d){              // returns an error key, or null once the flight is added
+function addFlight(al,ac,from,to,d){
   if(!gOK())return "eLogin";
   if(!al)return "eAl";
   if(ac&&ac.length<2)return "eAc";
@@ -234,7 +225,7 @@ function addFlight(al,ac,from,to,d){              // returns an error key, or nu
   if(fl.length>=MAXF)return "eMax";
   if(d&&fl.some(x=>x.al==al&&x.ac==ac&&x.f==from&&x.t==to&&x.d==d))return "eDup";
   ls.set(KF,[...fl,{id:newId(),al,ac,f:from,t:to,d:d||null}]);
-  [from,to].forEach(c=>{if(c!="INT")setVisited(c,true)});         // you have been to the airports you flew from and to
+  [from,to].forEach(c=>{if(c!="INT")setVisited(c,true)});
   return null;
 }
 function submit(form){
@@ -259,7 +250,6 @@ tbox.addEventListener("input",e=>{
   if(msg){msg=null;const m=$("#t-msg");if(m){m.className="tr-msg";m.textContent=""}}
 });
 
-// ---------- map: green marker + "Pernah sampai" button in each airport popup ----------
 const _bm=buildMarkers;
 buildMarkers=function(){
   _bm();
@@ -269,7 +259,7 @@ buildMarkers=function(){
     m.setPopupContent(m.getPopup().getContent()+`<br><button class="popbtn visbtn" type="button" data-v="${a.iata}"></button>`);
     const el=m.getElement&&m.getElement(),dot=el&&el.querySelector(".ap");
     if(dot)dot.classList.toggle("vis",!!v[a.iata]);
-    m.on("add",()=>paintMarker(a.iata));         // the map redraws the icon when the Airports layer is switched off and on
+    m.on("add",()=>paintMarker(a.iata));
   });
 };
 map.on("popupopen",e=>{
@@ -278,10 +268,9 @@ map.on("popupopen",e=>{
   b.onclick=()=>{if(!gOK()){needLogin();return}toggleVisited(b.dataset.v);if(isOn())draw()};
 });
 
-// ---------- aircraft card: "Pernah naik" (panel.js builds .kp-detail, route.js adds .rt with the route) ----------
 const rd={cs:"",open:false,al:"",ac:"",f:"",t:"",msg:null},rdDone=new Set();
 const KPB=document.querySelector(".kp-body");
-function cardInfo(card){                         // airline from the callsign prefix, type from panel.js, route from route.js; "" = unknown
+function cardInfo(card){
   const h=card.querySelector("h3");if(!h)return null;
   const cs=h.textContent.replace("✈","").trim().toUpperCase();if(!/^[A-Z0-9]{2,8}$/.test(cs))return null;
   const pre=cs.slice(0,3),hit=AIRLINES.find(a=>a.slice(1).includes(pre));
@@ -311,7 +300,7 @@ function rdPaint(){
   if(!box||!i)return;
   const h=rdHTML(i);box.innerHTML=h;box.dataset.h=h;
 }
-function injectRide(){                           // runs on every panel redraw (flights refresh every few seconds), so the state lives in rd, not in the DOM
+function injectRide(){
   const card=document.querySelector(".kp-detail");if(!card)return;
   const i=cardInfo(card);if(!i)return;
   let box=card.querySelector(".rd");
@@ -319,9 +308,9 @@ function injectRide(){                           // runs on every panel redraw (
     (card.querySelector("small")||card.querySelector("h3")).insertAdjacentHTML("afterend",`<div class="rd"></div>`);
     box=card.querySelector(".rd");
     if(rd.cs!=i.cs){rd.cs=i.cs;rd.open=false;rd.msg=null}
-  }else if(rd.open&&box.querySelector("form"))return;          // never rebuild a form somebody is typing in
+  }else if(rd.open&&box.querySelector("form"))return;
   const h=rdHTML(i);
-  if(box.dataset.h!==h){box.innerHTML=h;box.dataset.h=h}       // route.js fills the route a moment later: refresh the button when it arrives
+  if(box.dataset.h!==h){box.innerHTML=h;box.dataset.h=h}
 }
 if(KPB){
   new MutationObserver(injectRide).observe(KPB,{childList:true,subtree:true});
@@ -350,12 +339,11 @@ if(KPB){
   });
 }
 
-// ---------- hooks into the existing app ----------
 const _go=go;
 go=function(tab){_go(tab);if(tab=="trip"){drawForm();draw()}};
 const label=()=>{nb.querySelector("b").textContent=tr("tab")};
 const _al=applyLang;
-applyLang=function(){_al();label();if(isOn()){drawForm();draw()}};         // also runs after sync pulls newer data
-window.KLTrip={summary:()=>{if(!gOK())return null;const s=stats();return {ap:s.ap,total:AIRPORTS.length,fl:s.fl,km:s.km,bd:earned(s).length,bdTotal:BADGES.length}}};   // read by the Home dashboard
+applyLang=function(){_al();label();if(isOn()){drawForm();draw()}};
+window.KLTrip={summary:()=>{if(!gOK())return null;const s=stats();return {ap:s.ap,total:AIRPORTS.length,fl:s.fl,km:s.km,bd:earned(s).length,bdTotal:BADGES.length}}};
 label();buildMarkers();
 })();

@@ -55,7 +55,6 @@
   nav button.on{color:var(--cyan);box-shadow:inset 0 3px var(--cyan)}
   nav button span{font-size:1.3rem}
 
-  /* ---- Map theme ---- */
   .ap{position:relative;display:block;width:14px;height:14px;border-radius:50%;background:var(--red);border:2px solid var(--yellow);box-shadow:0 0 12px var(--red)}
   .ap::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:2px solid var(--cyan);opacity:0;animation:ping 2.4s ease-out infinite;animation-delay:var(--d,0s)}
   @keyframes ping{0%{transform:scale(.4);opacity:.9}100%{transform:scale(1.5);opacity:0}}
@@ -94,8 +93,7 @@
 </nav>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-// ---------- DATA (check coordinates and facts against OurAirports before publishing) ----------
-// [IATA, ICAO, city, type (i=international, d=domestic), lat, lng, state, fact EN, fact MS]
+
 const AIRPORTS=[
 ["KUL","WMKK","Kuala Lumpur","i",2.7456,101.7099,"Selangor","Malaysia's busiest airport.","Lapangan terbang tersibuk Malaysia."],
 ["PEN","WMKP","Penang","i",5.2971,100.2770,"Pulau Pinang","Gateway to Penang's street food.","Pintu masuk ke makanan jalanan Pulau Pinang."],
@@ -116,7 +114,7 @@ const AIRPORTS=[
 ["SDK","WBKS","Sandakan","d",5.9009,118.0594,"Sabah","Serves Sandakan, near Sepilok orangutan sanctuary.","Lapangan terbang untuk Sandakan, berhampiran Pusat Pemulihan Orang Utan Sepilok."],
 ["TWU","WBKW","Tawau","d",4.3133,118.1219,"Sabah","Serves Tawau in eastern Sabah.","Lapangan terbang untuk Tawau, di timur Sabah."]
 ].map(a=>({iata:a[0],icao:a[1],city:a[2],intl:a[3]=="i",lat:a[4],lng:a[5],state:a[6],fact:{en:a[7],ms:a[8]}}));
-// Official names, following the Ministry of Transport Malaysia list: [BM, EN]
+
 const NAMES={
 KUL:["Lapangan Terbang Antarabangsa Kuala Lumpur","Kuala Lumpur International Airport"],
 PEN:["Lapangan Terbang Antarabangsa Pulau Pinang","Penang International Airport"],
@@ -166,7 +164,6 @@ function go(tab){
 }
 $$("nav button").forEach(b=>b.onclick=()=>go(b.dataset.tab));
 
-// ---------- MAP ----------
 const map=L.map("map").setView([4.2,109.5],6);
 const CARTO_KEY="cb1_4qmp_1_04adf6eea4fdfd20309cb292";
 L.tileLayer("https://basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}/{y}{r}.png?key="+CARTO_KEY,{attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',maxZoom:12}).addTo(map);
@@ -193,7 +190,6 @@ async function loadFlights(){
 }
 loadFlights();setInterval(loadFlights,30000);
 
-// ---------- QUIZ ----------
 const poolOf=()=>cfg.lv=="easy"?AIRPORTS.filter(a=>a.intl):cfg.lv=="hard"?AIRPORTS.filter(a=>!a.intl):AIRPORTS;
 const seg=(id,items,cur)=>`<div class="seg" id="${id}">${items.map(k=>`<button data-v="${k}" class="${k==cur?"on":""}">${t(k)}</button>`).join("")}</div>`;
 function setup(){
@@ -247,7 +243,6 @@ function finish(){
   };
 }
 
-// ---------- LEARN ----------
 function buildCards(){
   const known=ls.get("kl-known",{});
   const n=AIRPORTS.filter(a=>known[a.iata]===1).length;
@@ -266,7 +261,6 @@ function buildCards(){
   $$("#lbox .act button").forEach(b=>b.onclick=()=>{known[b.dataset.k]=+b.dataset.v;ls.set("kl-known",known);buildCards()});
 }
 
-// ---------- LEADERBOARD ----------
 async function loadBoard(){
   const box=$("#bbox");
   try{

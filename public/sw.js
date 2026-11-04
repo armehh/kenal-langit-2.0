@@ -1,5 +1,5 @@
-// KenalLangit service worker: lets the app be installed and opens its shell when offline.
-// Network first, so a normal visit always gets the newest files. /api/* is never cached (live data).
+
+
 const CACHE = "kl-shell-v1";
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", e => {
